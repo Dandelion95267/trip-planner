@@ -1,0 +1,128 @@
+{
+  "city": "北京",
+  "start_date": "2026-11-01",
+  "end_date": "2026-11-02",
+  "days": [
+    {
+      "date": "2026-11-01",
+      "day_index": 0,
+      "description": "第一天游览故宫与景山。",
+      "transportation": "景点间交通建议：步行",
+      "accommodation": "经济型酒店",
+      "hotel": {
+        "poi_id": "test-hotel",
+        "name": "测试酒店",
+        "address": "测试酒店地址",
+        "location": null,
+        "price_range": null,
+        "rating": null,
+        "distance": null,
+        "type": null,
+        "estimated_cost": null
+      },
+      "attractions": [
+        {
+          "poi_id": "test-palace",
+          "name": "故宫博物院",
+          "address": "景山前街4号",
+          "location": null,
+          "visit_duration": 120,
+          "description": "测试用游览建议。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "test-park",
+          "name": "景山公园",
+          "address": "景山西街44号",
+          "location": null,
+          "visit_duration": 60,
+          "description": "公园散步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": 0
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "test-restaurant",
+          "type": "lunch",
+          "name": "测试餐馆",
+          "address": "测试地址",
+          "location": null,
+          "description": null,
+          "estimated_cost": null
+        }
+      ],
+      "routes": [
+        {
+          "origin": {
+            "id": "test-palace",
+            "name": "故宫博物院",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "destination": {
+            "id": "test-park",
+            "name": "景山公园",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "mode": "walking",
+          "distance_m": 1445,
+          "duration_s": 1156,
+          "walking_distance_m": null,
+          "steps": ["沿道路前行", "到达景山公园"],
+          "selection_reason": "近距离优先步行。",
+          "warnings": []
+        }
+      ],
+      "route_warnings": [],
+      "order_optimization": null
+    },
+    {
+      "date": "2026-11-02",
+      "day_index": 1,
+      "description": "第二天公园漫步。",
+      "transportation": "步行",
+      "accommodation": "经济型酒店",
+      "hotel": null,
+      "attractions": [
+        {
+          "poi_id": "test-temple",
+          "name": "天坛公园",
+          "address": "天坛东路",
+          "location": null,
+          "visit_duration": 120,
+          "description": "公园漫步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        }
+      ],
+      "meals": [],
+      "routes": [],
+      "route_warnings": [],
+      "order_optimization": null
+    }
+  ],
+  "weather_info": [
+    {
+      "date": "2026-11-01",
+      "day_weather": "晴",
+      "night_weather": "晴",
+      "day_temp": 17,
+      "night_temp": 2,
+      "wind_direction": "北",
+      "wind_power": "1-3"
+    }
+  ],
+  "overall_suggestions": "测试数据：出行前确认开放时间和预约要求。",
+  "budget": null
+}
