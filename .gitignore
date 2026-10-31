@@ -1,0 +1,32 @@
+# Private configuration; keep only empty examples.
+.env
+.env.*
+!.env.example
+
+# Python environment and generated files.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Frontend dependencies, builds and test artifacts.
+node_modules/
+dist/
+artifacts/
+test-results/
+playwright-report/
+.sites-runtime/
+
+# Local runtime and editor files.
+*.log
+*.pid
+.idea/
+.DS_Store
+Thumbs.db
+
+# Backend tests are source files and must be included.
+!backend/tests/test_*.py
