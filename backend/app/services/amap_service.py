@@ -12,6 +12,7 @@ from mcp.types import CallToolResult
 
 from app.config import get_settings
 from app.models.schemas import Location, POIInfo, RoutePlan, RouteRequest, WeatherInfo
+from app.services.route_policy import walking_distance
 
 
 class AmapConfigurationError(RuntimeError):
@@ -21,9 +22,24 @@ class AmapConfigurationError(RuntimeError):
 class AmapServiceError(RuntimeError):
     """地图服务请求失败或返回了无法解析的数据。"""
 
+    def __init__(self, message: str, *, code: str = "provider_error"):
+        super().__init__(message)
+        self.code = code
+
 
 class AmapRouteNotFoundError(AmapServiceError):
     """地点缺少坐标或高德没有返回可用路线。"""
+
+    def __init__(self, message: str, *, code: str = "no_route"):
+        super().__init__(message, code=code)
+
+
+class AmapWalkingLimitError(AmapRouteNotFoundError):
+    """没有可验证且满足本段步行上限的方案。"""
+
+    def __init__(self, message: str, *, code: str = "walking_unknown", minimum_walking_m: int | None = None):
+        super().__init__(message, code=code)
+        self.minimum_walking_m = minimum_walking_m
 
 
 class AmapService:
@@ -96,11 +112,11 @@ class AmapService:
             raise AmapServiceError("高德地点详情无法解析，请检查地点ID后重试。") from None
 
     async def plan_route(self, request: RouteRequest) -> RoutePlan:
-        """先查起终点坐标，再查询第一条可用路线，不调用大模型。"""
+        """查询路线；设置步行上限时从返回方案中筛选，不调用大模型。"""
         origin = await self.get_poi_detail(request.origin_poi_id)
         destination = await self.get_poi_detail(request.destination_poi_id)
         if origin.location is None or destination.location is None:
-            raise AmapRouteNotFoundError("起点或终点缺少地图坐标，无法查询路线。")
+            raise AmapRouteNotFoundError("起点或终点缺少地图坐标，无法查询路线。", code="missing_coordinates")
         arguments = {
             "origin": f"{origin.location.longitude},{origin.location.latitude}",
             "destination": f"{destination.location.longitude},{destination.location.latitude}",
@@ -114,14 +130,14 @@ class AmapService:
             arguments.update(city=request.city, cityd=request.city)
         result = await self._call_tool(tools[request.mode], arguments)
         try:
-            return self._parse_route(result, origin, destination, request.mode)
+            return self._parse_route(result, origin, destination, request.mode, request.max_leg_walking_m)
         except AmapRouteNotFoundError:
             raise
         except Exception:
-            raise AmapServiceError("高德路线结果无法解析，请稍后重试。") from None
+            raise AmapServiceError("高德路线结果无法解析，请稍后重试。", code="invalid_response") from None
 
     @staticmethod
-    def _parse_route(result: CallToolResult, origin: POIInfo, destination: POIInfo, mode: str) -> RoutePlan:
+    def _parse_route(result: CallToolResult, origin: POIInfo, destination: POIInfo, mode: str, max_leg_walking_m: int | None = None) -> RoutePlan:
         data = AmapService._parse_result(result)
         # 步行结果有 route 外层，驾车和公共交通工具目前直接返回路线对象。
         route = data.get("route", data)
@@ -130,7 +146,37 @@ class AmapService:
             raise ValueError("路线结果缺少方案列表。")
         if not options:
             raise AmapRouteNotFoundError("高德未找到可用路线，请更换地点或出行方式。")
-        option = options[0]
+        if max_leg_walking_m is None:
+            return AmapService._parse_route_option(options[0], origin, destination, mode)
+        eligible = []
+        known_distances = []
+        unknown_count = 0
+        for option in options:
+            try:
+                plan = AmapService._parse_route_option(option, origin, destination, mode)
+            except (ValueError, TypeError, KeyError, AttributeError):
+                unknown_count += 1
+                continue
+            distance = walking_distance(plan)
+            if distance is None:
+                unknown_count += 1
+            else:
+                known_distances.append(distance)
+            if distance is not None and distance <= max_leg_walking_m:
+                eligible.append(plan)
+        if not eligible:
+            code = "walking_unknown" if unknown_count else "over_limit"
+            raise AmapWalkingLimitError(
+                f"返回方案中没有可验证且步行不超过{max_leg_walking_m}米的路线。",
+                code=code, minimum_walking_m=min(known_distances) if known_distances else None,
+            )
+        selected = min(eligible, key=lambda item: (item.duration_s, walking_distance(item)))
+        selected.selection_reason = f"从返回方案中筛选每段步行不超过{max_leg_walking_m}米的路线；本方案步行{walking_distance(selected)}米，按预计耗时选择。"
+        return selected
+
+    @staticmethod
+    def _parse_route_option(option: dict, origin: POIInfo, destination: POIInfo, mode: str) -> RoutePlan:
+        """解析单个方案；未知距离保留为空。"""
         distance = option.get("distance")
         duration = AmapService._parse_metric(option["duration"])
         walking_distance = None

@@ -52,6 +52,7 @@ test("提交真实格式的需求、展示结果、切换日期并导出", async
   await openPlanner(page);
   await fillTrip(page);
   await page.getByRole("button", { name: "历史文化", exact: true }).click();
+  await page.getByLabel("每段最多步行（米，可选）").fill("1000");
   await page.getByRole("checkbox", { name: /按位置调整景点顺序/ }).check();
   await page.locator("summary").filter({ hasText: "餐饮与其他需求" }).click();
   await page.getByLabel("餐饮偏好", { exact: true }).fill("面食");
@@ -62,6 +63,7 @@ test("提交真实格式的需求、展示结果、切换日期并导出", async
   expect(submitted.city).toBe("北京");
   expect(submitted.travel_days).toBe(2);
   expect(submitted.route_mode).toBe("auto");
+  expect(submitted.max_leg_walking_m).toBe(1000);
   expect(submitted.optimize_order).toBe(true);
   expect(submitted.enable_review).toBe(true);
   expect(submitted.dining_preference).toBe("面食");
@@ -83,6 +85,23 @@ test("提交真实格式的需求、展示结果、切换日期并导出", async
   const downloadPath = "artifacts/exported-trip.json";
   await download.saveAs(downloadPath);
   expect(JSON.parse(await readFile(downloadPath, "utf8")).days).toHaveLength(2);
+});
+
+test("驾车与步行上限冲突时提示修改，不发送规划请求", async ({ page }) => {
+  let calls = 0;
+  await page.route("**/api/trip/plan", (route) => {
+    calls++;
+    return route.fulfill({ json: fixture });
+  });
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.getByLabel("交通方式", { exact: true }).selectOption("driving");
+  await page.getByLabel("每段最多步行（米，可选）").fill("1000");
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "步行上限适用于自动、步行或公共交通",
+  );
+  expect(calls).toBe(0);
 });
 
 test("后端失败时显示错误并允许重试", async ({ page }) => {

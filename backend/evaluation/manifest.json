@@ -1,0 +1,36 @@
+{
+  "dataset_version": "trip_eval_v1",
+  "status": "draft_not_benchmarked",
+  "created_at": "2026-11-01",
+  "description": "助手根据项目功能和既有验收问题编写的合成评测草稿，待人工审阅；不是用户日志、人工标准答案或已获得的评测结果。",
+  "case_count": 20,
+  "splits": {
+    "development": 10,
+    "holdout": 10
+  },
+  "categories": {
+    "basic": 5,
+    "count": 5,
+    "transport": 5,
+    "preference": 5
+  },
+  "pilot_case_ids": [
+    "dev_basic_beijing_2d",
+    "dev_count_hangzhou_max2",
+    "dev_count_beijing_exact2",
+    "dev_transport_beijing_elderly",
+    "dev_preference_chengdu_food"
+  ],
+  "start_date": "2026-11-05",
+  "request_profile": {
+    "enable_review": true,
+    "optimize_order": false
+  },
+  "notes": [
+    "expected与manual_checks不发送给规划或审核模型。",
+    "当前接口尚无每日景点上限和步行上限字段，这些要求在request.free_text_input中表达。",
+    "必须人工审阅样例与评分规则；留出集不用于反复调优。",
+    "尚未采集高德资料快照、基线结果、token或实际费用。"
+  ],
+  "prepared_for_live_at": "2026-11-04"
+}

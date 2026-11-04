@@ -3,6 +3,8 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.services.route_policy import resolve_route_mode
+
 
 class BudgetOptions(BaseModel):
     """用户填写的费用估算标准，人民币整数金额；不代表实际报价。"""
@@ -26,6 +28,11 @@ class TripRequest(BaseModel):
     route_mode: Optional[Literal["auto", "walking", "driving", "transit"]] = Field(
         default=None, description="景点间路线方式；auto比较步行与公共交通，未填时根据交通方式识别"
     )
+    max_leg_walking_m: Optional[int] = Field(
+        default=None, ge=0, le=50000,
+        description="每段相邻景点路线的最大步行米数；公交含接驳步行。不含景点内部、酒店或餐馆接驳；仅适用于自动、步行、公共交通"
+    )
+    preserve_first_attraction: bool = Field(default=False, description="程序修复路线时保留本轮行程每天首站；不等于预约锁定。未设置时允许为满足步行约束更换首站")
     optimize_order: bool = Field(
         default=False, description="是否按地图坐标优化景点顺序，固定首个景点；仅用于无固定预约顺序的行程"
     )
@@ -51,6 +58,8 @@ class TripRequest(BaseModel):
             raise ValueError("结束日期不能早于开始日期。")
         if (end - start).days + 1 != self.travel_days:
             raise ValueError("旅行天数必须与开始日期、结束日期一致，包含首尾两天。")
+        if self.max_leg_walking_m is not None and resolve_route_mode(self.transportation, self.route_mode) not in {"auto", "walking", "transit"}:
+            raise ValueError("步行上限仅适用于自动、步行或公共交通，请明确选择交通方式。")
         return self
 
 
@@ -77,6 +86,7 @@ class RouteRequest(BaseModel):
     origin_poi_id: str = Field(..., min_length=1, max_length=100, description="起点的高德地点ID")
     destination_poi_id: str = Field(..., min_length=1, max_length=100, description="终点的高德地点ID")
     mode: Literal["walking", "driving", "transit"] = Field(default="walking", description="步行、驾车或公共交通")
+    max_leg_walking_m: Optional[int] = Field(default=None, ge=0, le=50000, description="本段步行米数上限，缺少步行数据的方案不能视为符合要求")
     city: str = Field(default="", max_length=100, description="公共交通查询必填，目前支持同城查询")
 
     @field_validator("origin_poi_id", "destination_poi_id", "city")
@@ -93,6 +103,8 @@ class RouteRequest(BaseModel):
             raise ValueError("起点和终点不能是同一个地点。")
         if self.mode == "transit" and not self.city:
             raise ValueError("公共交通路线查询必须提供城市。")
+        if self.max_leg_walking_m is not None and self.mode == "driving":
+            raise ValueError("驾车路线不能核验完整步行接驳，请勿同时设置步行上限。")
         return self
 
 
@@ -318,3 +330,21 @@ class TripPlan(BaseModel):
     overall_suggestions: str = Field(..., description="总体建议")
     budget: Optional[Budget] = Field(default=None, description="预算信息")
     review: Optional[TripReviewSummary] = Field(default=None, description="后端审核流程的结果；未开启时为空")
+    route_diagnostics: List["RouteDiagnostic"] = Field(default_factory=list, description="后端记录的本次路线查询与缓存诊断，供评测分析，不由模型生成")
+
+
+class RouteDiagnostic(BaseModel):
+    generation: int = Field(..., ge=1)
+    origin_poi_id: str
+    destination_poi_id: str
+    mode: Literal["auto", "walking", "transit", "driving"]
+    max_leg_walking_m: Optional[int] = None
+    status: Literal["available", "over_limit", "walking_unknown", "no_route", "missing_coordinates", "provider_error", "invalid_response", "timeout", "budget_exhausted"]
+    cache_hit: bool = False
+    attempt: int = Field(default=0, ge=0)
+    walking_distance_m: Optional[int] = Field(default=None, ge=0)
+    minimum_returned_walking_m: Optional[int] = Field(default=None, ge=0)
+    message: str
+
+
+TripPlan.model_rebuild()

@@ -15,6 +15,8 @@
 - 校验候选地点ID与日期，回填地图提供的名称、地址和坐标。
 - 可选审核与修改：最多修改两轮，未解决的问题明确保留提示。
 - 查询步行、驾车、公共交通路线，自动模式比较步行与公共交通。
+- 可设置相邻景点路线的步行上限；公交按方案接驳步行总距离筛选，未知距离不算合格。
+- 步行限制下有限搜索可行景点组合，保持每日景点数；复用同一次请求的路线结果，记录失败原因，支持保留每日首站。
 - 可选按直线距离调整景点顺序，支持交互式地图和日期切换。
 - 按填写标准估算住宿、餐饮、市内交通和门票费用，区分未知与零金额。
 - 复制完整行程，导出JSON与中文分页PDF。
@@ -23,7 +25,9 @@
 
 后端使用Python、HelloAgents、FastAPI、Pydantic和MCP SDK；前端使用Vue、TypeScript、Vite、Leaflet和jsPDF。
 
-已在Python 3.12、Node.js 24与Windows Edge环境验证。后端主要依赖按已测版本固定；前端依赖使用`package-lock.json`。后端有102项模拟测试，浏览器测试覆盖表单、地图、审核、预算与导出，并完成北京两天、杭州三天、老人出游三类真实联调。
+已在Python 3.12、Node.js 24与Windows Edge环境验证。后端主要依赖按已测版本固定；前端依赖使用`package-lock.json`。2026-11-04更新后端129项模拟测试、26项评测工具测试，前端类型检查与构建通过。此前还完成北京两天、杭州三天、老人出游三类真实联调；浏览器测试覆盖表单、地图、审核、预算与导出。
+
+本次老人单条真实复测取得2/2段公交路线，步行分别708、972米，均在1000米以内；耗时149.2302秒。餐饮位置与描述仍有问题，系统审核未通过；独立评测因缺少同次候选来源证据保留unknown。详见[路线优化与评测结果](docs/route-optimization.md)，不能把该单条结果当作整体成功率。
 
 功能通过不代表所有旅行要求均被满足，真实质量限制见[验收记录](ACCEPTANCE.md)。架构与模块职责见[结构说明](ARCHITECTURE.md)。
 
@@ -93,6 +97,8 @@ npm.cmd --prefix frontend run build
 ```powershell
 Set-Location backend
 ..\.venv\Scripts\python.exe -m unittest discover -s tests
+..\.venv\Scripts\python.exe -m unittest evaluation.test_evaluation
+..\.venv\Scripts\python.exe evaluation/validate_cases.py
 ```
 
 前端检查，在`frontend`目录执行：
@@ -114,10 +120,13 @@ Remove-Item Env:RUN_LIVE_ACCEPTANCE
 
 原始响应和导出产物写入`frontend/artifacts/`，不随仓库分发。
 
+另提供20条合成评测草稿（10条开发、10条留出），以及预览、合成回放和显式live执行工具。用法见[评测说明](backend/evaluation/README.md)。真实运行记录保存在被忽略的`backend/evaluation/results/`，本发布目录只包含公开结果摘要。
+
 ## 当前限制
 
 - 自由文本中的“每天两个景点”等要求仍属软约束；模型可能偏离。
-- 老人出游示例修改两轮后仍存在长步行和描述不一致，系统会保留“仍需调整”。
+- V2老人样例的两段景点间公交步行约束已满足，但餐饮位置与描述仍不一致，系统保留“仍需调整”；路线搜索有预算限制，不保证找到全部可行组合。
+- 地点来源证据、完整调用量、token和实际费用尚未采集；独立评测的unknown不能当作通过。
 - 开放时间、预约、房态、菜单和实际报价未核实，餐饮住宿接驳未完整计算。
 - 天气仅使用提供日期的预报；路线耗时是查询时的估计。
 - 预算按用户标准计算，不是实时价格或价格上限，不含往返目的地的大交通。

@@ -8,7 +8,8 @@ from hello_agents import HelloAgentsLLM, SimpleAgent
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from app.models.schemas import TripPlan, TripRequest, TripReviewResult
+from app.models.schemas import TripPlan, TripRequest, TripReviewIssue, TripReviewResult
+from app.services.route_policy import walking_distance
 from app.services.llm_service import get_llm
 
 
@@ -59,6 +60,26 @@ class TripReviewAgent:
             or [day.day_index for day in plan.days] != list(range(request.travel_days))
         ):
             raise TripReviewError("待审核行程与用户的城市、日期或天数不一致，请先校验行程。")
+        # 明确的数值规则先由代码检查，不让语义模型将缺失或超限误判为通过。
+        if request.max_leg_walking_m is not None:
+            issues = []
+            for day in plan.days:
+                routes = {(route.origin.id, route.destination.id): route for route in day.routes}
+                for origin, destination in zip(day.attractions, day.attractions[1:]):
+                    route = routes.get((origin.poi_id, destination.poi_id))
+                    distance = walking_distance(route) if route is not None else None
+                    if distance is not None and distance <= request.max_leg_walking_m:
+                        continue
+                    evidence = ("路线缺失或没有可验证的步行距离" if distance is None
+                                else f"路线步行{distance}米，超过{request.max_leg_walking_m}米上限")
+                    issues.append(TripReviewIssue(
+                        category="preference", day_index=day.day_index,
+                        problem=f"“{origin.name} → {destination.name}”未满足或验证每段步行上限。",
+                        evidence=f"用户明确设置max_leg_walking_m={request.max_leg_walking_m}；{evidence}。",
+                        suggestion="使用原候选中其他景点重新安排，保持用户的景点数量与交通要求，并重新查询所有受影响路段；没有合格路线时明确标记未满足，不用提示文字代替验证。",
+                    ))
+            if issues:
+                return TripReviewResult(passed=False, summary="程序核验发现步行上限未满足或路线证据缺失，需要调整。", issues=issues)
         return await run_in_threadpool(self._review_trip, request, plan)
 
     def _review_trip(self, request: TripRequest, plan: TripPlan) -> TripReviewResult:
@@ -86,7 +107,7 @@ class TripReviewAgent:
             })
         prompt = json.dumps({
             "request": request.model_dump(exclude={"budget_options"}),
-            "plan": plan.model_dump(),
+            "plan": plan.model_dump(exclude={"route_diagnostics"}),
             "daily_time_evidence": daily_time_evidence,
             "output_schema": TripReviewResult.model_json_schema(),
             "passed_example": {"passed": True, "summary": "未发现有明确依据的待修改问题。", "issues": []},

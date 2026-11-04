@@ -8,6 +8,8 @@ export interface TripRequest {
   travel_days: number;
   transportation: string;
   route_mode: RouteMode;
+  max_leg_walking_m?: number | null;
+  preserve_first_attraction?: boolean;
   optimize_order: boolean;
   accommodation: string;
   dining_preference: string;

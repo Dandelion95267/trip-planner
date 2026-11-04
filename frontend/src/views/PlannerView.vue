@@ -36,6 +36,7 @@ const form = reactive({
   start_date: localDate(1),
   end_date: localDate(2),
   route_mode: "auto" as RouteMode,
+  max_leg_walking_m: "" as number | "",
   accommodation: "经济型酒店",
   dining_preference: "",
   preferences: [] as string[],
@@ -82,6 +83,7 @@ function fillExample() {
   form.start_date = localDate(1);
   form.end_date = localDate(2);
   form.route_mode = "auto";
+  form.max_leg_walking_m = "";
   form.preferences = ["历史文化", "城市漫步"];
   form.free_text_input = "每天安排 2—3 个景点，节奏轻松一些。";
   form.accommodation = "经济型酒店";
@@ -107,6 +109,19 @@ async function submit() {
   if (!Number.isInteger(days.value) || days.value < 1 || days.value > 30) {
     error.value =
       "请选择有效的起止日期，旅行天数须为 1—30 天（包含首尾两天）。";
+    return;
+  }
+  if (
+    form.max_leg_walking_m !== "" &&
+    (!Number.isInteger(form.max_leg_walking_m) ||
+      form.max_leg_walking_m < 0 ||
+      form.max_leg_walking_m > 50_000)
+  ) {
+    error.value = "每段步行上限须为 0—50000 米的整数，留空表示不限制。";
+    return;
+  }
+  if (form.max_leg_walking_m !== "" && form.route_mode === "driving") {
+    error.value = "步行上限适用于自动、步行或公共交通，请调整交通方式。";
     return;
   }
   let budgetOptions: BudgetOptions | null = null;
@@ -149,6 +164,8 @@ async function submit() {
     travel_days: days.value,
     transportation: modeNames[form.route_mode],
     route_mode: form.route_mode,
+    max_leg_walking_m:
+      form.max_leg_walking_m === "" ? null : form.max_leg_walking_m,
     optimize_order: form.optimize_order,
     enable_review: form.enable_review,
     accommodation: form.accommodation,
@@ -312,6 +329,24 @@ async function submit() {
                 近距离优先步行，较远路段比较步行与公共交通耗时。
               </p>
               <div class="field-group">
+                <label class="field-label" for="max-leg-walking"
+                  >每段最多步行（米，可选）</label
+                >
+                <input
+                  id="max-leg-walking"
+                  v-model.number="form.max_leg_walking_m"
+                  type="number"
+                  min="0"
+                  max="50000"
+                  step="1"
+                  placeholder="例如 1000，留空表示不限制"
+                  aria-describedby="walking-limit-hint"
+                />
+                <p id="walking-limit-hint" class="field-hint">
+                  限制相邻景点路线中的步行，公交包含接驳步行；不含景点内部及酒店、餐馆接驳。无法满足时会提示。
+                </p>
+              </div>
+              <div class="field-group">
                 <span class="field-label">旅行偏好 <small>可多选</small></span>
                 <div class="preference-options">
                   <button
@@ -427,7 +462,8 @@ async function submit() {
                     />
                   </template>
                   <p class="fine-print">
-                    住宿按旅行天数减 1 晚估算；餐饮含全天，交通仅含市内，不含往返目的地的大交通。
+                    住宿按旅行天数减 1
+                    晚估算；餐饮含全天，交通仅含市内，不含往返目的地的大交通。
                   </p>
                 </div>
               </details>

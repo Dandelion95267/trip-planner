@@ -43,10 +43,16 @@ Pydantic解析 + 地点来源校验 + 日期校验
 | `backend/app/agents/trip_planner_agent.py` | 收集候选资料，生成或修改行程，校验来源并补充路线 |
 | `backend/app/agents/review_agent.py` | 根据需求、已有资料和交通耗时审核，不直接修改行程 |
 | `backend/app/services/amap_service.py` | 使用MCP SDK连接高德远程服务，解析地点、天气和路线 |
+| `backend/app/services/route_policy.py` | 统一交通模式与路线步行距离口径，供输入、查询、规划与审核复用 |
+| `backend/app/services/route_search.py` | 同次请求的路线结果、诊断与只沿已验证有向边的有限路径搜索 |
 | `backend/app/services/itinerary_optimizer.py` | 用户开启后，根据直线距离减少景点折返，不保证道路最短 |
 | `backend/app/services/budget_service.py` | 根据人数、房间数、天数和最终景点次数计算费用估算 |
 
 `prepare_context()`收集的候选资料仅在一次请求内复用，修改时不会重新搜索一遍候选列表。每次调用模型会创建独立`SimpleAgent`，不共享对话历史。同步模型调用在线程池中执行，HTTP接口使用异步函数。
+
+设置`max_leg_walking_m`后，地图服务从返回方案中筛选步行已知且不超限者；规划器二次核验，并在共享60秒路线预算内有限修复（每次生成最多24次额外候选边探测、每天最多12次）。先小范围替换，仍不可行时允许从候选中寻找整组可验证路线，保留当天景点数，不引入其他天已用的新景点。默认可替换首站；`preserve_first_attraction: true`约束程序和模型修改保留每日首站，开启顺序优化时也保持其固定首站约定。它不是预约或任意必游景点锁定功能。
+
+`TripPlanningContext.route_search`跨本次请求的修改轮次保存成功边和明确失败，临时失败最多实际尝试两次；模型也收到已查结果。`route_diagnostics`由程序记录状态、缓存命中和步行数据，不由模型生成。仍无法获取合格路线时明确保留未满足提示。审核者先由代码检查硬约束，失败直接返回修改反馈，不需要模型为数值规则判分。V2老人真实样例两段步行708、972米、路线覆盖2/2，但餐饮一致性审核仍未通过，耗时149秒，来源证据仍unknown。详见[优化说明与完整限制](docs/route-optimization.md)。
 
 ## 前端代码在哪里
 
