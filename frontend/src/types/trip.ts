@@ -47,6 +47,23 @@ export interface Meal {
   location: Location | null;
   description: string | null;
   estimated_cost: number | null;
+  anchor_poi_id?: string | null;
+  straight_line_distance_m?: number | null;
+  poi_category?: string | null;
+  preference_level?:
+    "category_supported" | "name_hint" | "unverified" | "not_requested" | null;
+  preference_summary?: string | null;
+  preference_evidence?: DiningPreferenceEvidence[];
+}
+export interface DiningPreferenceEvidence {
+  preference: string;
+  kind: "cuisine" | "taste" | "dietary" | "other";
+  target_category: string | null;
+  strict: boolean;
+  status: "supported" | "hint" | "unknown" | "conflict";
+  source: "poi_type" | "poi_name" | "not_available";
+  value: string | null;
+  explanation: string;
 }
 export interface Hotel {
   poi_id: string | null;
@@ -97,6 +114,8 @@ export interface DayPlan {
   hotel: Hotel | null;
   attractions: Attraction[];
   meals: Meal[];
+  dining_warnings?: string[];
+  dining_resolution?: DiningResolution | null;
   routes: RoutePlan[];
   route_warnings: string[];
   order_optimization: OrderOptimization | null;
@@ -142,6 +161,44 @@ export interface TripPlan {
   overall_suggestions: string;
   budget: Budget | null;
   review?: TripReviewSummary | null;
+  route_resolution?: RouteResolution | null;
+}
+
+export interface UnresolvedRoute {
+  day_index: number;
+  origin_poi_id: string | null;
+  destination_poi_id: string | null;
+  origin_name: string;
+  destination_name: string;
+  reason: string;
+  explanation: string;
+  observed_walking_m: number | null;
+}
+
+export interface RouteAlternative {
+  kind:
+    "retry" | "change_attractions" | "relax_walking_limit" | "change_transport";
+  title: string;
+  description: string;
+  condition_changes: string[];
+  suggested_max_leg_walking_m: number | null;
+  requires_confirmation: true;
+  verification: "not_verified";
+}
+
+export interface RouteResolution {
+  status: "verified" | "needs_choice" | "not_applicable";
+  scope: "adjacent_attractions";
+  requested_transportation: string;
+  requested_mode: RouteMode | null;
+  max_leg_walking_m: number | null;
+  preserve_first_attraction: boolean;
+  required_segments: number;
+  verified_segments: number;
+  summary: string;
+  limitations: string[];
+  unresolved: UnresolvedRoute[];
+  alternatives: RouteAlternative[];
 }
 
 export interface TripReviewIssue {
@@ -150,12 +207,73 @@ export interface TripReviewIssue {
   problem: string;
   evidence: string;
   suggestion: string;
+  source?: "program" | "model";
+  alternative?: {
+    proposal: string;
+    requires_confirmation: true;
+    applied: false;
+  } | null;
+}
+
+export interface DiningResolution {
+  status:
+    "candidates_available" | "partial" | "needs_choice" | "not_applicable";
+  requested_preference: string;
+  preference_verification: "not_requested" | "not_verified";
+  based_on_provisional_itinerary: boolean;
+  required_slots: number;
+  provided_slots: number;
+  summary: string;
+  unresolved: {
+    meal_type: "lunch" | "dinner";
+    anchor_poi_id: string | null;
+    anchor_name: string;
+    reason:
+      | "no_coordinates"
+      | "no_nearby_candidate"
+      | "provider_error"
+      | "timeout"
+      | "budget_exhausted"
+      | "preference_conflict"
+      | "preference_unverified";
+    explanation: string;
+  }[];
+  alternatives: {
+    kind:
+      "retry" | "manual_search" | "adjust_preferences" | "contact_restaurant";
+    title: string;
+    description: string;
+    requires_confirmation: true;
+    verification: "not_verified";
+  }[];
+  preference_notes?: string[];
 }
 
 export interface TripReviewResult {
   passed: boolean;
   summary: string;
   issues: TripReviewIssue[];
+  time_evidence?: {
+    day_index: number;
+    suggested_visit_minutes: number;
+    expected_route_count: number;
+    known_route_count: number;
+    known_route_duration_s: number;
+    known_total_duration_s: number;
+    all_adjacent_routes_available: boolean;
+    display_text: string;
+  }[];
+  meal_consistency?: {
+    day_index: number;
+    meal_type: "breakfast" | "lunch" | "dinner" | "snack";
+    expected_poi_id?: string | null;
+    expected_name: string;
+    mentioned_name?: string | null;
+    source_excerpt?: string | null;
+    status: "matched" | "conflict" | "unknown";
+    explanation: string;
+  }[];
+  semantic_status?: "completed" | "not_run" | "unavailable" | null;
 }
 
 export interface TripReviewSummary {

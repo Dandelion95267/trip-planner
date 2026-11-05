@@ -153,6 +153,17 @@ class Attraction(BaseModel):
     ticket_price: Optional[int] = Field(default=None, ge=0, description="门票价格（元），未知时为空")
 
 
+class DiningPreferenceEvidence(BaseModel):
+    preference: str
+    kind: Literal["cuisine", "taste", "dietary", "other"]
+    target_category: Optional[str] = None
+    strict: bool = False
+    status: Literal["supported", "hint", "unknown", "conflict"]
+    source: Literal["poi_type", "poi_name", "not_available"]
+    value: Optional[str] = None
+    explanation: str
+
+
 class Meal(BaseModel):
     """行程中的候选餐馆，消费和营业情况需要另行确认。"""
 
@@ -163,6 +174,12 @@ class Meal(BaseModel):
     location: Optional[Location] = Field(default=None, description="经纬度坐标")
     description: Optional[str] = Field(default=None, description="描述")
     estimated_cost: Optional[int] = Field(default=None, ge=0, description="用餐费用（元），未知时为空")
+    anchor_poi_id: Optional[str] = Field(default=None, description="餐馆筛选所依据的最终景点ID")
+    straight_line_distance_m: Optional[int] = Field(default=None, ge=0, description="到参考景点的估算直线距离，不是步行或道路距离")
+    poi_category: Optional[str] = Field(default=None, description="同次地图搜索或详情给出的餐馆类别，不是菜单证据")
+    preference_level: Optional[Literal["category_supported", "name_hint", "unverified", "not_requested"]] = None
+    preference_evidence: List[DiningPreferenceEvidence] = Field(default_factory=list)
+    preference_summary: Optional[str] = None
 
 
 class Hotel(BaseModel):
@@ -221,6 +238,51 @@ class OrderOptimization(BaseModel):
     reason: str = Field(..., description="调整或保持原顺序的原因")
 
 
+class UnresolvedMeal(BaseModel):
+    meal_type: Literal["lunch", "dinner"]
+    anchor_poi_id: Optional[str] = None
+    anchor_name: str
+    reason: Literal["no_coordinates", "no_nearby_candidate", "provider_error", "timeout", "budget_exhausted", "preference_conflict", "preference_unverified"]
+    explanation: str
+
+
+class DiningAlternative(BaseModel):
+    kind: Literal["retry", "manual_search", "adjust_preferences", "contact_restaurant"]
+    title: str
+    description: str
+    requires_confirmation: Literal[True] = True
+    verification: Literal["not_verified"] = "not_verified"
+
+
+class DiningResolution(BaseModel):
+    """餐馆候选交付，不代表菜单、口味、营业或接驳已经确认。"""
+
+    status: Literal["candidates_available", "partial", "needs_choice", "not_applicable"]
+    requested_preference: str
+    preference_verification: Literal["not_requested", "not_verified"]
+    based_on_provisional_itinerary: bool
+    required_slots: int = Field(..., ge=0, le=2)
+    provided_slots: int = Field(..., ge=0, le=2)
+    summary: str
+    preference_notes: List[str] = Field(default_factory=list)
+    unresolved: List[UnresolvedMeal] = Field(default_factory=list)
+    alternatives: List[DiningAlternative] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_slots(self) -> "DiningResolution":
+        missing = self.required_slots - self.provided_slots
+        if missing < 0 or missing != len(self.unresolved):
+            raise ValueError("餐饮候选数量必须与未安排时段一致。")
+        expected = ("not_applicable" if self.required_slots == 0 else
+                    "candidates_available" if missing == 0 else
+                    "partial" if self.provided_slots else "needs_choice")
+        if self.status != expected or (missing and not self.alternatives):
+            raise ValueError("餐饮交付状态、数量和替代建议不一致。")
+        if not missing and self.alternatives and (not self.preference_notes or any(x.kind != "contact_restaurant" for x in self.alternatives)):
+            raise ValueError("候选齐全时只能提供有偏好说明支持的商家核实建议。")
+        return self
+
+
 class DayPlan(BaseModel):
     """单日行程。"""
 
@@ -232,6 +294,8 @@ class DayPlan(BaseModel):
     hotel: Optional[Hotel] = Field(default=None, description="酒店信息")
     attractions: List[Attraction] = Field(default_factory=list, description="景点列表")
     meals: List[Meal] = Field(default_factory=list, description="餐饮安排")
+    dining_warnings: List[str] = Field(default_factory=list, description="餐饮搜索、坐标或接驳尚未核验的提示")
+    dining_resolution: Optional[DiningResolution] = Field(default=None, description="后端生成的当前景点餐饮候选状态、原因和待选择做法，模型不可生成")
     routes: List[RoutePlan] = Field(default_factory=list, description="按行程顺序查询的相邻景点路线，不含酒店和餐馆接驳")
     route_warnings: List[str] = Field(default_factory=list, description="未能查询的路段或不支持的出行方式提示")
     order_optimization: Optional[OrderOptimization] = Field(default=None, description="主动开启后的景点顺序优化结果")
@@ -258,6 +322,12 @@ class WeatherInfo(BaseModel):
         return v
 
 
+class ReviewAlternative(BaseModel):
+    proposal: str = Field(..., min_length=1, description="尚未采用的模型调整方向，不是自动修改指令")
+    requires_confirmation: Literal[True] = True
+    applied: Literal[False] = False
+
+
 class TripReviewIssue(BaseModel):
     """审核发现的一项问题，应基于用户需求或已提供的行程数据。"""
 
@@ -270,6 +340,8 @@ class TripReviewIssue(BaseModel):
     problem: str = Field(..., min_length=1, description="发现的具体问题")
     evidence: str = Field(..., min_length=1, description="判断依据，引用用户要求、游览时长、路线耗时等已有信息")
     suggestion: str = Field(..., min_length=1, description="供规划Agent执行的具体修改建议")
+    source: Literal["program", "model"] = Field(default="model", description="问题由程序核对还是模型提出；后端填写")
+    alternative: Optional[ReviewAlternative] = Field(default=None, description="需用户确认的其他方向；后端分离，自动修改不使用")
 
     @field_validator("problem", "evidence", "suggestion", mode="before")
     @classmethod
@@ -278,12 +350,45 @@ class TripReviewIssue(BaseModel):
         return value.strip() if isinstance(value, str) else value
 
 
+class ReviewTimeEvidence(BaseModel):
+    day_index: int = Field(..., ge=0)
+    suggested_visit_minutes: int = Field(..., ge=0)
+    expected_route_count: int = Field(..., ge=0)
+    known_route_count: int = Field(..., ge=0)
+    known_route_duration_s: int = Field(..., ge=0)
+    known_total_duration_s: int = Field(..., ge=0, description="建议游览加已知相邻景点交通；非完整全天耗时")
+    all_adjacent_routes_available: bool
+    display_text: str
+
+    @model_validator(mode="after")
+    def validate_totals(self):
+        if self.known_total_duration_s != self.suggested_visit_minutes * 60 + self.known_route_duration_s:
+            raise ValueError("已知时间合计与原始时长不一致。")
+        if self.known_route_count > self.expected_route_count or self.all_adjacent_routes_available != (self.known_route_count == self.expected_route_count):
+            raise ValueError("相邻路线覆盖与时间统计不一致。")
+        return self
+
+
+class MealConsistencyCheck(BaseModel):
+    day_index: int = Field(..., ge=0)
+    meal_type: Literal["breakfast", "lunch", "dinner", "snack"]
+    expected_poi_id: Optional[str] = None
+    expected_name: str
+    mentioned_name: Optional[str] = None
+    source_excerpt: Optional[str] = None
+    status: Literal["matched", "conflict", "unknown"]
+    explanation: str
+
+
 class TripReviewResult(BaseModel):
     """一次行程审核的结构化结果，不代表开放时间或预约条件已核实。"""
 
     passed: bool = Field(..., description="是否通过本次审核；存在需要修改的问题时为false")
     summary: str = Field(..., min_length=1, description="审核结论的简短说明")
     issues: List[TripReviewIssue] = Field(default_factory=list, description="需要修改的问题；审核通过时为空")
+    time_evidence: List[ReviewTimeEvidence] = Field(default_factory=list, description="后端计算，模型不能填写")
+    meal_consistency: List[MealConsistencyCheck] = Field(default_factory=list, description="后端核对，未知不算冲突")
+    semantic_status: Optional[Literal["completed", "not_run", "unavailable"]] = None
 
     @field_validator("summary", mode="before")
     @classmethod
@@ -319,6 +424,102 @@ class TripReviewSummary(BaseModel):
         return self
 
 
+class POISearchEvidence(BaseModel):
+    tool: Literal["maps_text_search", "maps_around_search"]
+    parameters: dict[str, str | int]
+    collected_at_utc: str
+    pois: List[POIInfo]
+
+
+class POIDetailEvidence(BaseModel):
+    collected_at_utc: str
+    poi: POIInfo
+
+
+class CandidateEvidence(BaseModel):
+    version: Literal[1] = 1
+    request_id: str
+    candidates: List[POIInfo] = Field(default_factory=list)
+    hotel_candidates: List[POIInfo] = Field(default_factory=list)
+    restaurant_candidates: List[POIInfo] = Field(default_factory=list)
+    searches: List[POISearchEvidence] = Field(default_factory=list)
+    details: List[POIDetailEvidence] = Field(default_factory=list)
+
+
+class StageTiming(BaseModel):
+    generation: int = Field(..., ge=0)
+    stage: Literal["context", "model", "order", "routes", "dining", "review"]
+    elapsed_s: float = Field(..., ge=0)
+
+
+class DiningDiagnostic(BaseModel):
+    generation: int = Field(..., ge=1)
+    day_index: int
+    meal_type: Literal["lunch", "dinner"]
+    anchor_poi_id: Optional[str] = None
+    selected_poi_id: Optional[str] = None
+    status: Literal["selected", "no_coordinates", "no_nearby_candidate", "provider_error", "timeout", "budget_exhausted", "routes_pending", "preference_conflict", "preference_unverified"]
+    cache_hit: bool = False
+    search_relaxed: bool = False
+    straight_line_distance_m: Optional[int] = Field(default=None, ge=0)
+    query_terms: List[str] = Field(default_factory=list)
+    preference_rejections: int = Field(default=0, ge=0)
+
+
+class UnresolvedRoute(BaseModel):
+    """原要求下尚未核验通过的一段路线，不表示该城市无解。"""
+
+    day_index: int = Field(..., ge=0)
+    origin_poi_id: Optional[str] = None
+    destination_poi_id: Optional[str] = None
+    origin_name: str
+    destination_name: str
+    reason: Literal["no_route", "over_limit", "walking_unknown", "missing_coordinates", "missing_poi_id", "provider_error", "invalid_response", "timeout", "budget_exhausted", "not_queried", "mode_mismatch", "unsupported_mode"]
+    explanation: str
+    observed_walking_m: Optional[int] = Field(default=None, ge=0, description="仅限本次返回方案中的已知距离，不是所有可行方案的下界")
+
+
+class RouteAlternative(BaseModel):
+    """待用户选择的调整建议，不是已验证的替代行程。"""
+
+    kind: Literal["retry", "change_attractions", "relax_walking_limit", "change_transport"]
+    title: str
+    description: str
+    condition_changes: List[str] = Field(default_factory=list)
+    suggested_max_leg_walking_m: Optional[int] = Field(default=None, ge=0, le=50000)
+    requires_confirmation: Literal[True] = True
+    verification: Literal["not_verified"] = "not_verified"
+
+
+class RouteResolution(BaseModel):
+    """程序生成的路线交付状态，与模型语义审核和原硬约束评分分开。"""
+
+    status: Literal["verified", "needs_choice", "not_applicable"]
+    scope: Literal["adjacent_attractions"] = "adjacent_attractions"
+    requested_transportation: str
+    requested_mode: Optional[Literal["auto", "walking", "transit", "driving"]] = None
+    max_leg_walking_m: Optional[int] = Field(default=None, ge=0, le=50000)
+    preserve_first_attraction: bool = False
+    required_segments: int = Field(..., ge=0)
+    verified_segments: int = Field(..., ge=0)
+    summary: str
+    limitations: List[str] = Field(default_factory=list)
+    unresolved: List[UnresolvedRoute] = Field(default_factory=list)
+    alternatives: List[RouteAlternative] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_coverage(self) -> "RouteResolution":
+        missing = self.required_segments - self.verified_segments
+        if missing < 0 or missing != len(self.unresolved):
+            raise ValueError("路线核验数量必须与缺失路段一致。")
+        if self.status == "needs_choice":
+            if missing == 0 or not self.alternatives:
+                raise ValueError("待选择状态必须有未核验路段和可选建议。")
+        elif self.alternatives or missing or (self.status == "verified") != (self.required_segments > 0):
+            raise ValueError("路线状态与核验范围不一致。")
+        return self
+
+
 class TripPlan(BaseModel):
     """完整旅行计划。"""
 
@@ -331,6 +532,11 @@ class TripPlan(BaseModel):
     budget: Optional[Budget] = Field(default=None, description="预算信息")
     review: Optional[TripReviewSummary] = Field(default=None, description="后端审核流程的结果；未开启时为空")
     route_diagnostics: List["RouteDiagnostic"] = Field(default_factory=list, description="后端记录的本次路线查询与缓存诊断，供评测分析，不由模型生成")
+    request_id: Optional[str] = Field(default=None, description="后端生成的本次请求标识")
+    candidate_evidence: Optional[CandidateEvidence] = Field(default=None, description="同次工具查询的来源快照，由后端填写")
+    stage_timings: List[StageTiming] = Field(default_factory=list, description="各生成轮次的阶段耗时，不代表token或费用")
+    dining_diagnostics: List[DiningDiagnostic] = Field(default_factory=list)
+    route_resolution: Optional[RouteResolution] = Field(default=None, description="后端生成的路线核验状态、原因和待用户选择的替代建议，模型不可自行生成")
 
 
 class RouteDiagnostic(BaseModel):

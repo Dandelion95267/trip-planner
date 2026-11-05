@@ -117,6 +117,10 @@ async def run_http_case(client: httpx.AsyncClient, case: EvaluationCase, repetit
         else:
             try:
                 record["result"] = response.json(parse_constant=reject_nonfinite_constant, parse_float=finite_float)
+                if isinstance(record["result"], dict):
+                    captured = record["result"].get("candidate_evidence")
+                    if isinstance(captured, dict):
+                        record["candidate_evidence"] = captured
             except ValueError:
                 record["error"] = {"type": "invalid_json"}
     except (TimeoutError, httpx.TimeoutException):
@@ -195,13 +199,16 @@ def write_reports(out_dir: Path, metadata: dict, records: list[dict]) -> dict:
         f"| 已交付行程相邻路线覆盖 | `{summary['route_coverage_on_delivered_plans']}` |",
         f"| 记录中的耗时（秒） | `{summary['elapsed_s']}` |",
         "", "未知证据不算已验证通过。路线覆盖只基于已交付行程，应结合交付率查看。",
-        "HTTP模式尚未采集候选快照，地点来源通常为unknown；不能将其包装为完整端到端达标。",
+        "HTTP模式保存后端提供的同次来源快照；缺少快照或坐标补全依据时仍为unknown，不能视为通过。旧记录不事后补证据。",
         "人工偏好、节奏和一致性尚未评分，请填写manual_review.csv并查阅rubric.md；本脚本尚不汇总人工评分。",
         "token、实际费用和完整模型/工具调用量未采集，不从review_count推算。",
         "本地代码哈希不证明远端服务器已加载同一版本；模型标签是运行者填写，需自行核对。",
-        "", "## 逐条自动结论", "", "| 样例 | 重复 | 交付 | 结论 |", "| --- | --- | --- | --- |",
+        "路线待选择说明单独检查覆盖、原因、原条件和确认要求，不把解释清楚等同于路线已达标；旧记录不补造该说明。",
+        "餐饮说明单独检查当前景点锚点、半径、时段覆盖与待确认选项；不证明菜单或口味已满足。",
+        "偏好证据单独核对同次类别/名称引用与未知做法，不将其当成菜单或整体偏好已满足。",
+        "", "## 逐条自动结论", "", "| 样例 | 重复 | 交付 | 原硬约束 | 路线交付说明 | 餐饮交付说明 | 偏好证据 |", "| --- | --- | --- | --- | --- | --- | --- |",
     ]
-    rows.extend(f"| {row['case_id']} | {row['repetition']} | {row['evaluation']['delivered']} | {row['evaluation']['hard_status']} |" for row in records)
+    rows.extend(f"| {row['case_id']} | {row['repetition']} | {row['evaluation']['delivered']} | {row['evaluation']['hard_status']} | {row['evaluation'].get('route_resolution_handling', {}).get('status', 'not_evaluated')} | {row['evaluation'].get('dining_resolution_handling', {}).get('status', 'not_evaluated')} | {row['evaluation'].get('dining_preference_handling', {}).get('status', 'not_evaluated')} |" for row in records)
     (out_dir / "report.md").write_text("\n".join(rows) + "\n", encoding="utf-8")
     return summary
 

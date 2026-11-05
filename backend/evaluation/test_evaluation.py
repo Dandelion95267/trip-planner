@@ -40,7 +40,55 @@ def good_elderly():
     return row
 
 
+def captured_example():
+    row = example()
+    evidence = row["candidate_evidence"]
+    evidence.update({"version": 1, "request_id": "same-request", "details": [], "searches": []})
+    row["result"]["request_id"] = "same-request"
+    for group in ("candidates", "hotel_candidates", "restaurant_candidates"):
+        evidence["searches"].append({"tool": "maps_text_search", "parameters": {"keywords": group, "city": "北京"},
+                                    "collected_at_utc": "2026-11-05T01:00:00+00:00", "pois": deepcopy(evidence[group])})
+    return row
+
+
 class EvaluatorTests(unittest.TestCase):
+    def test_captured_sources_need_matching_request_identity(self):
+        row = captured_example()
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "passed")
+        row["candidate_evidence"]["request_id"] = "another-request"
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "failed")
+
+    def test_captured_details_can_verify_previously_unknown_supplemented_coordinates(self):
+        row = captured_example()
+        point = row["result"]["days"][0]["attractions"][0]
+        point["location"] = {"longitude": 116.4, "latitude": 39.9}
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "unknown")
+        original = next(x for x in row["candidate_evidence"]["candidates"] if x["id"] == point["poi_id"])
+        detail = deepcopy(original)
+        detail["location"] = point["location"]
+        row["candidate_evidence"]["details"].append({"poi": detail, "collected_at_utc": "2026-11-05T01:00:01+00:00"})
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "passed")
+        detail["location"] = {"longitude": 117.4, "latitude": 39.9}
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "failed")
+
+    def test_candidate_copy_without_a_tool_search_is_not_provenance(self):
+        row = captured_example()
+        row["candidate_evidence"]["searches"] = []
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "unknown")
+        row["candidate_evidence"]["searches"] = [{"tool": "maps_text_search", "parameters": {},
+                                                "collected_at_utc": "2026-11-05T01:00:00+00:00", "pois": []}]
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "failed")
+
+    def test_captured_name_mismatch_still_fails(self):
+        row = captured_example()
+        row["result"]["days"][0]["attractions"][0]["name"] = "fabricated"
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "failed")
+
+    def test_invalid_capture_timestamp_remains_unknown(self):
+        row = captured_example()
+        row["candidate_evidence"]["searches"][0]["collected_at_utc"] = "not-a-timestamp"
+        self.assertEqual(grade(row)["checks"]["candidate_sources"]["status"], "unknown")
+
     def test_complete_synthetic_evidence_can_pass_without_scoring_subjective_quality(self):
         result = grade(example())
         self.assertEqual(result["hard_status"], "passed")
@@ -153,6 +201,12 @@ class HttpExecutionTests(unittest.IsolatedAsyncioTestCase):
         record = await self.call(handler)
         self.assertIsNone(record["error"])
         self.assertIsNone(record["candidate_evidence"])
+
+    async def test_http_saves_the_backend_captured_evidence(self):
+        row = captured_example()
+        row["result"]["candidate_evidence"] = deepcopy(row["candidate_evidence"])
+        record = await self.call(lambda request: httpx.Response(200, json=row["result"]))
+        self.assertEqual(record["candidate_evidence"], row["candidate_evidence"])
 
     async def test_http_error_is_recorded_without_raw_private_details(self):
         record = await self.call(lambda request: httpx.Response(502, json={"detail": "private provider details"}))

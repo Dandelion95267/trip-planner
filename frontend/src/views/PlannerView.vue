@@ -77,6 +77,17 @@ function togglePreference(preference: string) {
   if (index >= 0) form.preferences.splice(index, 1);
   else form.preferences.push(preference);
 }
+function editRequest(section: "route" | "dining" = "route") {
+  const control = document.getElementById(
+    section === "dining" ? "dining" : "route-mode",
+  );
+  const details = control?.closest("details");
+  if (details) details.open = true;
+  control?.scrollIntoView({ block: "center", behavior: "smooth" });
+  control?.focus({ preventScroll: true });
+  statusMessage.value =
+    "请按你的选择调整条件；原行程仍保留，点击生成后才会重新规划。";
+}
 function fillExample() {
   if (busy.value) return;
   form.city = "北京";
@@ -515,7 +526,11 @@ async function submit() {
             <div class="loading-lines"><i></i><i></i><i></i></div>
             <small>长行程需要更久，你也可以停止等待后调整需求。</small>
           </section>
-          <TripResults v-else-if="plan" :plan="plan" />
+          <TripResults
+            v-else-if="plan"
+            :plan="plan"
+            @edit-request="editRequest"
+          />
           <section v-else class="empty-panel">
             <div class="empty-heading">
               <span class="step-label">02 / 收下你的旅行灵感</span

@@ -21,6 +21,11 @@ def make_plan(counts=(2, 1)):
                 "poi_id": f"{index}-{place}", "name": f"景点{place}", "address": "地址",
                 "visit_duration": 60, "description": "游览建议", "ticket_price": 999,
             } for place in range(count)],
+            "routes": [{
+                "origin": {"id": f"{index}-{place}", "name": f"景点{place}"},
+                "destination": {"id": f"{index}-{place + 1}", "name": f"景点{place + 1}"},
+                "mode": "transit", "duration_s": 600, "walking_distance_m": 500,
+            } for place in range(count - 1)],
         } for index, count in enumerate(counts)], overall_suggestions="出行前确认。",
     )
 

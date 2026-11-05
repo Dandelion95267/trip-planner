@@ -1334,6 +1334,47 @@ button:active:not(:disabled) {
     font-size: 10px;
   }
 }
+.route-resolution h3,
+.route-resolution h4 {
+  margin: 0 0 10px;
+}
+.route-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.route-option {
+  padding: 14px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+}
+.route-option small {
+  display: block;
+  margin-top: 10px;
+}
+.dining-resolution {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #dce2d6;
+  overflow-wrap: anywhere;
+}
+.dining-option {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #dce2d6;
+  border-radius: 10px;
+}
+.dining-option small {
+  display: block;
+}
+.meal-preference-evidence {
+  padding-left: 18px;
+  overflow-wrap: anywhere;
+}
+.meal-preference-evidence li {
+  margin: 8px 0;
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -7,6 +7,235 @@ import { mockMapDetails, mockMapTiles } from "./helpers/map";
 const fixture: TripPlan = JSON.parse(
   readFileSync(new URL("./fixtures/trip.json", import.meta.url), "utf8"),
 );
+const routeChoiceFixture: TripPlan = JSON.parse(
+  readFileSync(
+    new URL("./fixtures/route-choice.json", import.meta.url),
+    "utf8",
+  ),
+);
+
+test("数量不符的修改未采用，原行程和待确认方向保留且不自动请求", async ({ page }) => {
+  const result: TripPlan = JSON.parse(readFileSync(new URL("./fixtures/revision-constraints.json", import.meta.url), "utf8"));
+  let calls = 0;
+  await page.route("**/api/trip/plan", route => { calls++; return route.fulfill({ json: result }); });
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  const report = page.getByRole("region", { name: "行程审核结果" });
+  await expect(report).toContainText("修改未采用");
+  await expect(report).toContainText("实际1个景点");
+  await expect(report).toContainText("保持每天恰好2个景点");
+  await expect(report).toContainText("待你确认，尚未采用");
+  await expect(report).toContainText("本次不会自动执行");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出行程 JSON", exact: true }).click();
+  await (await download).saveAs("artifacts/revision-constraints.json");
+  const exported = JSON.parse(await readFile("artifacts/revision-constraints.json", "utf8"));
+  expect(exported.days[0].attractions).toHaveLength(2);
+  expect(exported.review.revisions).toBe(0);
+  expect(exported.review.result.issues[0].alternative.applied).toBe(false);
+  expect(exported.review.result.issues[0].alternative.requires_confirmation).toBe(true);
+  expect(calls).toBe(1);
+  await page.screenshot({ path: "artifacts/revision-constraints-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: "artifacts/revision-constraints-mobile.png", fullPage: true });
+});
+
+test("程序时间与名称冲突可见，语义审核失败不掩盖已有问题", async ({ page }) => {
+  const result: TripPlan = JSON.parse(readFileSync(new URL("./fixtures/review-guards.json", import.meta.url), "utf8"));
+  await page.route("**/api/trip/plan", route => route.fulfill({ json: result }));
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  const report = page.getByRole("region", { name: "行程审核结果" });
+  await expect(report).toContainText("已知合计85分钟");
+  await expect(report).toContainText("不是完整全天耗时");
+  await expect(report).toContainText("语义审核未完成");
+  await expect(report).toContainText("程序核对");
+  await expect(report).toContainText("餐馆甲");
+  await expect(report).toContainText("餐馆乙");
+  await expect(report).not.toContainText("22.5");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出行程 JSON", exact: true }).click();
+  const file = await download;
+  const target = "artifacts/review-guards.json";
+  await file.saveAs(target);
+  const exported = JSON.parse(await readFile(target, "utf8"));
+  expect(exported.review.result.time_evidence[0].known_total_duration_s).toBe(5100);
+  expect(exported.review.result.meal_consistency[0].status).toBe("conflict");
+  expect(exported.review.result.semantic_status).toBe("unavailable");
+  await page.screenshot({ path: "artifacts/review-guards-desktop.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: "artifacts/review-guards-mobile.png", fullPage: true });
+});
+
+test("偏好逐项展示类别依据、名称线索和待确认口味，不自动改变要求", async ({
+  page,
+}) => {
+  const result: TripPlan = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/dining-preferences.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  let requests = 0;
+  await page.route("**/api/trip/plan", (route) => {
+    requests++;
+    return route.fulfill({ json: result });
+  });
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.getByLabel("目的地城市").fill("成都");
+  await page.locator("summary").filter({ hasText: "餐饮与其他需求" }).click();
+  await page.getByLabel("餐饮偏好", { exact: true }).fill("本地菜 清淡");
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  const evidence = page.locator(".meal-preference-evidence").first();
+  await expect(evidence).toContainText("本地菜：有地图类别依据");
+  await expect(evidence).toContainText("清淡：待确认");
+  await expect(evidence).toContainText("四川菜(川菜)");
+  await expect(page.locator(".meal-item")).toHaveCount(2);
+  await expect(
+    page.getByRole("region", { name: "餐饮候选状态" }),
+  ).toContainText("联系商家核实菜单与做法");
+  await page.getByRole("tab", { name: /第 2 天/ }).click();
+  await expect(evidence).toContainText("本地菜：仅有名称线索");
+  await expect(evidence).toContainText("清淡：待确认");
+  await page.getByRole("button", { name: "返回餐饮需求" }).click();
+  await expect(page.getByLabel("餐饮偏好", { exact: true })).toHaveValue(
+    "本地菜 清淡",
+  );
+  expect(requests).toBe(1);
+  await page.getByRole("tab", { name: /第 1 天/ }).click();
+  await page.screenshot({
+    path: "artifacts/dining-preferences-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "artifacts/dining-preferences-mobile.png",
+    fullPage: true,
+  });
+});
+
+test("餐饮按当前景点独立展示，缺失时说明原因并返回餐饮设置", async ({
+  page,
+}) => {
+  const result: TripPlan = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/independent-dining.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  let requests = 0;
+  await page.route("**/api/trip/plan", (route) => {
+    requests++;
+    return route.fulfill({ json: result });
+  });
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.locator("#route-mode").selectOption("transit");
+  await page.getByLabel("每段最多步行（米，可选）").fill("1000");
+  await page.locator("summary").filter({ hasText: "餐饮与其他需求" }).click();
+  await page.getByLabel("餐饮偏好", { exact: true }).fill("清淡");
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  const report = page.getByRole("region", { name: "餐饮候选状态" });
+  await expect(report).toContainText("部分用餐时段待补充");
+  await expect(report).toContainText("等待超时");
+  await expect(report).toContainText("尚未应用");
+  await expect(page.locator(".meal-item")).toHaveCount(1);
+  await expect(
+    page.getByText(/以下餐馆仅围绕当前暂定景点筛选/).first(),
+  ).toBeVisible();
+  await report.getByRole("button", { name: "返回餐饮需求" }).click();
+  await expect(page.locator("#route-mode")).toHaveValue("transit");
+  await expect(page.getByLabel("每段最多步行（米，可选）")).toHaveValue("1000");
+  await expect(page.getByLabel("餐饮偏好", { exact: true })).toBeFocused();
+  await expect(page.getByLabel("餐饮偏好", { exact: true })).toHaveValue(
+    "清淡",
+  );
+  expect(requests).toBe(1);
+  await page.getByRole("tab", { name: /第 2 天/ }).click();
+  await expect(report).toContainText("已有餐馆候选");
+  await expect(page.locator(".meal-item")).toHaveCount(2);
+  await page.getByRole("tab", { name: /第 1 天/ }).click();
+  await page.screenshot({
+    path: "artifacts/independent-dining-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "artifacts/independent-dining-mobile.png",
+    fullPage: true,
+  });
+});
+
+test("未完整核验路线时说明原因与选择，返回设置不自动放宽或再次请求", async ({
+  page,
+}) => {
+  let requests = 0;
+  await page.route("**/api/trip/plan", (route) => {
+    requests++;
+    return route.fulfill({ json: routeChoiceFixture });
+  });
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.locator("#route-mode").selectOption("transit");
+  await page.getByLabel("每段最多步行（米，可选）").fill("1000");
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  const panel = page.getByRole("region", { name: "路线待选择" });
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("已核验1/2段");
+  await expect(panel).toContainText("1256米");
+  await expect(panel.locator(".route-option")).toHaveCount(4);
+  await expect(panel).toContainText("尚未应用");
+  await expect(
+    page.getByText("旅程还需要你的选择", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "行程审核结果" }),
+  ).toContainText("其余行程安排尚未完成审核");
+  await panel.getByRole("button", { name: "返回需求设置" }).click();
+  await expect(page.locator("#route-mode")).toBeFocused();
+  await expect(page.locator("#route-mode")).toHaveValue("transit");
+  await expect(page.getByLabel("每段最多步行（米，可选）")).toHaveValue("1000");
+  expect(requests).toBe(1);
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出行程 JSON" }).click();
+  const download = await downloadPromise;
+  await download.saveAs("artifacts/route-choice.json");
+  const exported = JSON.parse(
+    await readFile("artifacts/route-choice.json", "utf8"),
+  );
+  expect(exported.route_resolution.status).toBe("needs_choice");
+  expect(exported.route_resolution.max_leg_walking_m).toBe(1000);
+  expect(exported.days[1].routes[0].walking_distance_m).toBe(708);
+  await page.screenshot({
+    path: "artifacts/route-choice-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "artifacts/route-choice-mobile.png",
+    fullPage: true,
+  });
+});
 
 async function openPlanner(page: Page) {
   await mockMapTiles(page);
@@ -85,6 +314,24 @@ test("提交真实格式的需求、展示结果、切换日期并导出", async
   const downloadPath = "artifacts/exported-trip.json";
   await download.saveAs(downloadPath);
   expect(JSON.parse(await readFile(downloadPath, "utf8")).days).toHaveLength(2);
+});
+
+test("餐馆直线距离与缺失提示明确展示", async ({ page }) => {
+  const result: TripPlan = structuredClone(fixture);
+  result.days[0].meals[0].straight_line_distance_m = 320;
+  result.days[0].dining_warnings = ["晚餐候选坐标未核验，请自行确认。"];
+  await page.route("**/api/trip/plan", (route) =>
+    route.fulfill({ json: result }),
+  );
+  await openPlanner(page);
+  await fillTrip(page);
+  await page.getByRole("button", { name: "生成我的行程" }).click();
+  await expect(
+    page.getByText("距参考景点直线约 320 米（非步行距离，接驳未核验）"),
+  ).toBeVisible();
+  await expect(
+    page.getByText("晚餐候选坐标未核验，请自行确认。", { exact: true }),
+  ).toBeVisible();
 });
 
 test("驾车与步行上限冲突时提示修改，不发送规划请求", async ({ page }) => {

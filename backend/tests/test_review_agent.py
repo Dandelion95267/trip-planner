@@ -51,6 +51,11 @@ def make_failed_review(day_index=0):
 class ReviewAgentTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.request, self.plan = make_review_inputs()
+        self.plan.days[0].routes.append(RoutePlan(
+            origin={"id": "b", "name": "景点b"}, destination={"id": "c", "name": "景点c"},
+            mode="transit", duration_s=1200,
+        ))
+        self.plan.days[0].route_warnings = []
         self.llm = Mock()
         self.reviewer = TripReviewAgent(llm=self.llm)
         patcher = patch("app.agents.review_agent.SimpleAgent")
@@ -76,7 +81,9 @@ class ReviewAgentTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["plan"]["days"][0]["route_warnings"], self.plan.days[0].route_warnings)
 
     async def test_partial_routes_are_not_presented_as_complete(self):
-        await self.reviewer.review_trip(self.request, self.plan)
+        self.plan.days[0].routes.pop()
+        # 单独验证语义审核资料；公开入口会先拦截不完整路线。
+        self.reviewer._review_trip(self.request, self.plan)
         evidence = self.get_payload()["daily_time_evidence"][0]
         self.assertEqual(evidence["suggested_visit_minutes"], 360)
         self.assertEqual(evidence["expected_route_count"], 2)
@@ -85,11 +92,12 @@ class ReviewAgentTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(evidence["all_adjacent_routes_available"])
 
     async def test_counts_only_routes_matching_current_attraction_order(self):
+        self.plan.days[0].routes.pop()
         self.plan.days[0].routes.append(RoutePlan(
             origin={"id": "c", "name": "景点c"}, destination={"id": "a", "name": "景点a"},
             mode="walking", duration_s=9999,
         ))
-        await self.reviewer.review_trip(self.request, self.plan)
+        self.reviewer._review_trip(self.request, self.plan)
         evidence = self.get_payload()["daily_time_evidence"][0]
         self.assertEqual(evidence["known_route_count"], 1)
         self.assertEqual(evidence["known_route_duration_s"], 1800)

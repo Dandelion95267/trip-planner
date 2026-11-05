@@ -13,6 +13,7 @@ from mcp.types import CallToolResult
 from app.config import get_settings
 from app.models.schemas import Location, POIInfo, RoutePlan, RouteRequest, WeatherInfo
 from app.services.route_policy import walking_distance
+from app.services.source_evidence import SourceEvidenceRecorder
 
 
 class AmapConfigurationError(RuntimeError):
@@ -48,6 +49,7 @@ class AmapService:
     def __init__(self):
         # 当前应用每次请求创建服务实例，这里只复用本次请求查过的地点详情。
         self._poi_details: dict[str, POIInfo] = {}
+        self.source_evidence = SourceEvidenceRecorder()
 
     async def search_poi(
         self, keywords: str, city: str, citylimit: bool = True
@@ -58,7 +60,11 @@ class AmapService:
             "citylimit": str(citylimit).lower(),
         })
         try:
-            return self._parse_pois(result)
+            pois = self._parse_pois(result)
+            self.source_evidence.search("maps_text_search", {
+                "keywords": keywords, "city": city, "citylimit": str(citylimit).lower(),
+            }, pois)
+            return pois
         except Exception:
             raise AmapServiceError("高德地点搜索返回的数据无法解析，请稍后重试。") from None
 
@@ -93,6 +99,22 @@ class AmapService:
         # 有偏好但未搜到结果时返回空列表，避免扩大搜索后丢失用餐要求。
         return await self.search_poi(keywords=keywords, city=city)
 
+    async def search_restaurants_near(self, location: Location, preference: str = "", radius: int = 2000) -> list[POIInfo]:
+        """使用官方MCP周边搜索；半径用于候选召回，不代表实际步行距离。"""
+        keywords = preference.strip() or "餐馆"
+        if not any(word in keywords for word in ("餐厅", "餐馆", "饭店", "小吃", "美食")):
+            keywords += " 餐馆"
+        arguments = {"keywords": keywords,
+                     "location": f"{location.longitude},{location.latitude}", "radius": str(radius)}
+        result = await self._call_tool("maps_around_search", arguments)
+        try:
+            pois = self._parse_pois(result)
+        except Exception:
+            raise AmapServiceError("高德周边餐馆结果无法解析。", code="invalid_response") from None
+        self.source_evidence.search("maps_around_search", arguments, pois)
+        self.source_evidence.register("restaurant_candidates", pois)
+        return pois
+
     async def get_poi_detail(self, poi_id: str) -> POIInfo:
         """按地点ID查询详情，获取搜索列表中可能缺少的坐标。"""
         if poi_id in self._poi_details:
@@ -107,6 +129,7 @@ class AmapService:
                 type=data.get("type") or "", location=self._parse_location(data.get("location")),
             )
             self._poi_details[poi_id] = place
+            self.source_evidence.detail(place)
             return place.model_copy(deep=True)
         except Exception:
             raise AmapServiceError("高德地点详情无法解析，请检查地点ID后重试。") from None

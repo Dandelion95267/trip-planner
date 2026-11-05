@@ -182,7 +182,8 @@ class WalkingPlanningTests(unittest.IsolatedAsyncioTestCase):
         await planner._attach_routes(current, request(), [place(key) for key in ("A", "B", "D", "C", "E")])
         self.assertEqual([item.poi_id for item in current.days[0].attractions], ["A", "E", "D"])
         self.assertEqual([(item.origin.id, item.destination.id) for item in current.days[0].routes], [("A", "E"), ("E", "D")])
-        self.assertEqual(planner.amap_service.plan_route.await_count, 5)
+        # V4.1在替换之前也先查询原B→D，确保其他路段获得初查机会。
+        self.assertEqual(planner.amap_service.plan_route.await_count, 6)
 
     async def test_unrepairable_route_has_bounded_attempts_and_keeps_original_attractions(self):
         planner = self.make_planner()
@@ -338,7 +339,7 @@ class WalkingReviewTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(result.passed)
             self.assertIn("1000", result.issues[0].evidence)
 
-    async def test_workflow_still_respects_two_revision_limit_when_constraints_remain_unmet(self):
+    async def test_workflow_waits_for_user_choice_instead_of_rewriting_missing_routes(self):
         planner = Mock()
         planner.llm = Mock()
         planner.prepare_context = AsyncMock(return_value=object())
@@ -348,8 +349,10 @@ class WalkingReviewTests(unittest.IsolatedAsyncioTestCase):
             result = await TripPlanningWorkflow(planner, reviewer).plan_trip(request(enable_review=True))
         model.assert_not_called()
         self.assertEqual(result.review.status, "needs_revision")
-        self.assertEqual(result.review.revisions, 2)
-        self.assertEqual(result.review.review_count, 3)
+        self.assertEqual(result.review.revisions, 0)
+        self.assertEqual(result.review.review_count, 0)
+        planner.generate_plan.assert_awaited_once()
+        self.assertEqual(result.route_resolution.status, "needs_choice")
 
 
 if __name__ == "__main__":

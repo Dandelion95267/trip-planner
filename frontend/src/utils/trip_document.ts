@@ -15,6 +15,12 @@ const mealNames = {
   dinner: "晚餐",
   snack: "加餐",
 };
+const preferenceNames = {
+  supported: "有地图类别依据",
+  hint: "仅有名称线索",
+  unknown: "待确认",
+  conflict: "类别冲突",
+};
 const reviewNames = {
   passed: "审核通过",
   needs_revision: "行程仍需调整",
@@ -35,6 +41,41 @@ export function buildTripDocument(plan: TripPlan): DocumentBlock[] {
     "行程、天气与路线仅供出行参考，请在出发前确认开放时间、预约和交通条件。此文件保存导出时的最终版本，不会自动更新。",
   );
 
+  if (plan.route_resolution) {
+    const resolution = plan.route_resolution;
+    add(
+      "heading",
+      resolution.status === "needs_choice"
+        ? "部分路线待确认 · 请先选择下一步"
+        : "相邻景点路线核验范围",
+    );
+    add(
+      resolution.status === "needs_choice" ? "warning" : "body",
+      resolution.summary,
+    );
+    add(
+      "body",
+      `原交通要求：${resolution.requested_transportation}；每段步行上限：${resolution.max_leg_walking_m === null ? "未设置" : `${resolution.max_leg_walking_m}米`}。`,
+    );
+    for (const item of resolution.unresolved) {
+      add(
+        "subheading",
+        `第 ${item.day_index + 1} 天：${item.origin_name} → ${item.destination_name}`,
+      );
+      add("warning", item.explanation);
+    }
+    for (const option of resolution.alternatives) {
+      add("subheading", `可选做法（待你确认，尚未应用）：${option.title}`);
+      add("body", option.description);
+      for (const change of option.condition_changes) add("muted", change);
+      add(
+        "muted",
+        "此替代选择尚未重新查询，可用性待核验；原行程和原条件保持不变。",
+      );
+    }
+    for (const limitation of resolution.limitations) add("muted", limitation);
+  }
+
   if (plan.review) {
     const review = plan.review;
     add("heading", `行程审核 · ${reviewNames[review.status]}`);
@@ -45,13 +86,32 @@ export function buildTripDocument(plan: TripPlan): DocumentBlock[] {
     );
     if (review.result) {
       add("body", review.result.summary);
+      for (const item of review.result.time_evidence ?? []) {
+        add("body", item.display_text);
+      }
+      if (review.result.semantic_status === "unavailable") {
+        add("warning", "语义审核未完成，当前保留的是程序核对结果。");
+      } else if (review.result.semantic_status === "not_run") {
+        add("muted", "语义审核尚未执行，其余安排仍需确认。");
+      }
+      for (const item of review.result.meal_consistency ?? []) {
+        add(item.status === "conflict" ? "warning" : "muted", `第 ${item.day_index + 1} 天 · ${item.explanation}`);
+      }
       for (const issue of review.result.issues) {
         add(
           "subheading",
           `${issue.day_index === null ? "整体行程" : `第 ${issue.day_index + 1} 天`}：${issue.problem}`,
         );
         add("body", `依据：${issue.evidence}`);
+        if (issue.source) {
+          add("muted", `来源：${issue.source === "program" ? "程序核对" : "模型意见"}`);
+        }
         add("body", `修改建议：${issue.suggestion}`);
+        if (issue.alternative) {
+          add("warning", "其他调整方向 · 待你确认，尚未采用");
+          add("body", issue.alternative.proposal);
+          add("muted", "这可能改变原要求。只有你同意并修改需求后才重新规划，本次不会自动执行。");
+        }
       }
     }
   } else {
@@ -145,6 +205,37 @@ export function buildTripDocument(plan: TripPlan): DocumentBlock[] {
       );
       add("muted", `地址：${meal.address || "暂未提供"}`);
       if (meal.description) add("body", meal.description);
+      for (const item of meal.preference_evidence || []) {
+        add("body", `${item.preference}：${preferenceNames[item.status]}`);
+        if (item.value)
+          add(
+            "muted",
+            `依据（${item.source === "poi_type" ? "地图类别" : "名称线索"}）：${item.value}`,
+          );
+        add("muted", item.explanation);
+      }
+    }
+    for (const warning of day.dining_warnings || []) add("warning", warning);
+    if (day.dining_resolution) {
+      const dining = day.dining_resolution;
+      add("subheading", "餐饮候选交付说明");
+      add("body", dining.summary);
+      for (const note of dining.preference_notes || []) add("muted", note);
+      if (dining.requested_preference)
+        add(
+          "muted",
+          `原餐饮偏好：${dining.requested_preference}；适配尚未核实。`,
+        );
+      for (const item of dining.unresolved)
+        add(
+          "warning",
+          `${mealNames[item.meal_type]} · ${item.anchor_name}：${item.explanation}`,
+        );
+      for (const option of dining.alternatives) {
+        add("subheading", `餐饮可选做法（待确认，尚未应用）：${option.title}`);
+        add("body", option.description);
+        add("muted", "可用性待核验，需你选择后再处理。");
+      }
     }
     add("subheading", "住宿候选");
     if (day.hotel) {

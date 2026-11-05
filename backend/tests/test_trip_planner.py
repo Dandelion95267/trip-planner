@@ -356,7 +356,11 @@ class TripPlannerTests(unittest.IsolatedAsyncioTestCase):
             "poi_id": third.id, "name": third.name, "address": "", "visit_duration": 60, "description": "游览建议。",
         })
         next_route = route.model_copy(update={"origin": route.destination, "destination": third})
-        planner.amap_service.plan_route.side_effect = [AmapServiceError("first failed"), next_route]
+        async def lookup(query):
+            if (query.origin_poi_id, query.destination_poi_id) == ("second-id", third.id):
+                return next_route
+            raise AmapServiceError("failed route")
+        planner.amap_service.plan_route.side_effect = lookup
         with patch("app.agents.trip_planner_agent.SimpleAgent") as agent_class:
             agent_class.return_value.run.return_value = json.dumps(response)
             plan = await planner.plan_trip(make_request())
@@ -446,7 +450,8 @@ class TripPlannerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(plan.days[0].attractions), 2)
         self.assertEqual(plan.days[0].routes, [])
         self.assertTrue(plan.days[0].route_warnings)
-        self.assertEqual(planner.amap_service.plan_route.await_count, 2)
+        # 两种方式都失败后，还会有限尝试反向安排；每个方向只查一次。
+        self.assertEqual(planner.amap_service.plan_route.await_count, 4)
 
     async def test_auto_alias_updates_daily_transportation_from_actual_selection(self):
         planner, response, route = make_routed_planner()

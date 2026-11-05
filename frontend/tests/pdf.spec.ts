@@ -8,6 +8,138 @@ const fixture: TripPlan = JSON.parse(
   readFileSync(new URL("./fixtures/trip.json", import.meta.url), "utf8"),
 );
 
+test("拒绝数量修改和未采用的方向保留在复制及PDF", async ({ page }) => {
+  const result: TripPlan = JSON.parse(readFileSync(new URL("./fixtures/revision-constraints.json", import.meta.url), "utf8"));
+  await openResults(page, result);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "复制行程", exact: true }).click();
+  await expect(page.getByText("行程已复制", { exact: true })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  await downloadPdf(page, "artifacts/revision-constraints.pdf");
+  const pdf = (await capturedText(page)).replace(/\s+/g, "");
+  for (const text of [copied.replace(/\s+/g, ""), pdf]) {
+    for (const expected of ["修改未采用", "实际1个景点", "保持每天恰好2个景点", "待你确认，尚未采用", "本次不会自动执行", "已知合计430分钟"]) expect(text).toContain(expected);
+  }
+});
+
+test("程序85分钟、原文名称冲突和语义审核未完成保留在复制及PDF", async ({ page }) => {
+  const result: TripPlan = JSON.parse(readFileSync(new URL("./fixtures/review-guards.json", import.meta.url), "utf8"));
+  await openResults(page, result);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "复制行程", exact: true }).click();
+  await expect(page.getByText("行程已复制", { exact: true })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  await downloadPdf(page, "artifacts/review-guards.pdf");
+  const pdf = (await capturedText(page)).replace(/\s+/g, "");
+  for (const text of [copied.replace(/\s+/g, ""), pdf]) {
+    for (const expected of ["已知合计85分钟", "不是完整全天耗时", "语义审核未完成", "程序核对", "餐馆甲", "餐馆乙"]) expect(text).toContain(expected);
+    expect(text).not.toContain("22.5");
+  }
+});
+
+test("偏好依据与未核实口味保留在复制及PDF，不把名称线索导出成确认", async ({
+  page,
+}) => {
+  const result: TripPlan = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/dining-preferences.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  await openResults(page, result);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "复制行程", exact: true }).click();
+  await expect(page.getByText("行程已复制", { exact: true })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  for (const value of [
+    "本地菜：有地图类别依据",
+    "本地菜：仅有名称线索",
+    "清淡：待确认",
+    "尚未应用",
+    "四川菜(川菜)",
+  ])
+    expect(copied).toContain(value);
+  await downloadPdf(page, "artifacts/dining-preferences.pdf");
+  const text = (await capturedText(page)).replace(/\s+/g, "");
+  for (const value of [
+    "本地菜：有地图类别依据",
+    "本地菜：仅有名称线索",
+    "清淡：待确认",
+    "尚未应用",
+  ])
+    expect(text).toContain(value);
+});
+
+test("餐饮暂定候选、未完成原因和选择同时保留在复制及PDF中", async ({
+  page,
+}) => {
+  const data: TripPlan = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/independent-dining.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  await openResults(page, data);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "复制行程", exact: true }).click();
+  await expect(page.getByText("行程已复制", { exact: true })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  for (const text of [
+    "当前提供1/2",
+    "当前提供2/2",
+    "等待超时",
+    "餐饮可选做法",
+    "尚未应用",
+    "暂定景点",
+  ])
+    expect(copied).toContain(text);
+  await downloadPdf(page, "artifacts/independent-dining.pdf");
+  const text = (await capturedText(page)).replace(/\s+/g, "");
+  for (const value of [
+    "当前提供1/2",
+    "当前提供2/2",
+    "等待超时",
+    "餐饮可选做法",
+    "尚未应用",
+  ])
+    expect(text).toContain(value);
+});
+
+test("缺失路线的原条件、原因和待确认建议保留在复制文本与PDF中", async ({
+  page,
+}) => {
+  const partial: TripPlan = JSON.parse(
+    readFileSync(
+      new URL("./fixtures/route-choice.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  await openResults(page, partial);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "复制行程", exact: true }).click();
+  await expect(page.getByText("行程已复制", { exact: true })).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  for (const text of [
+    "已核验1/2段",
+    "1000米",
+    "1256米",
+    "尚未应用",
+    "不保证整趟行程可行",
+    "公共交通",
+  ])
+    expect(copied).toContain(text);
+  await downloadPdf(page, "artifacts/route-choice.pdf");
+  const text = (await capturedText(page)).replace(/\s+/g, "");
+  for (const value of [
+    "部分路线待确认",
+    "1000米",
+    "1256米",
+    "尚未应用",
+    "不保证整趟行程可行",
+  ])
+    expect(text).toContain(value);
+});
+
 async function openResults(page: Page, plan: TripPlan = fixture) {
   await page.addInitScript(() => {
     const audit = window as typeof window & { pdfTexts: string[] };

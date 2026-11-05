@@ -1,0 +1,141 @@
+{
+  "city": "模拟城市",
+  "start_date": "2026-11-05",
+  "end_date": "2026-11-05",
+  "days": [
+    {
+      "date": "2026-11-05",
+      "day_index": 0,
+      "description": "上午游览甲景点；之后在甲景点附近的餐馆乙午餐，午餐后休息；下午前往乙景点。",
+      "transportation": "步行",
+      "accommodation": "不住宿",
+      "hotel": null,
+      "attractions": [
+        {
+          "poi_id": "甲景点",
+          "name": "甲景点",
+          "address": "模拟地址",
+          "location": null,
+          "visit_duration": 30,
+          "description": "休闲参观。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "乙景点",
+          "name": "乙景点",
+          "address": "模拟地址",
+          "location": null,
+          "visit_duration": 45,
+          "description": "休闲参观。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "meal_a",
+          "type": "lunch",
+          "name": "餐馆甲",
+          "address": null,
+          "location": null,
+          "description": null,
+          "estimated_cost": null,
+          "anchor_poi_id": "甲景点",
+          "straight_line_distance_m": null,
+          "poi_category": null,
+          "preference_level": null,
+          "preference_evidence": [],
+          "preference_summary": null
+        }
+      ],
+      "dining_warnings": [],
+      "dining_resolution": null,
+      "routes": [
+        {
+          "origin": {
+            "id": "甲景点",
+            "name": "甲景点",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "destination": {
+            "id": "乙景点",
+            "name": "乙景点",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "mode": "walking",
+          "distance_m": 500,
+          "duration_s": 600,
+          "walking_distance_m": null,
+          "steps": [],
+          "selection_reason": null,
+          "warnings": []
+        }
+      ],
+      "route_warnings": [],
+      "order_optimization": null
+    }
+  ],
+  "weather_info": [],
+  "overall_suggestions": "虚构测试样例，实际接驳与营业未知。",
+  "budget": null,
+  "review": {
+    "status": "needs_revision",
+    "review_count": 1,
+    "revisions": 0,
+    "result": {
+      "passed": false,
+      "summary": "本次列出1项待修改意见，请核对逐项依据。语义审核未完成，已保留程序发现的问题。",
+      "issues": [
+        {
+          "category": "consistency",
+          "day_index": 0,
+          "problem": "午餐介绍与餐馆列表的名称不一致。",
+          "evidence": "当天原文：“之后在甲景点附近的餐馆乙午餐”；meals[lunch].name=“餐馆甲”，poi_id=meal_a。",
+          "suggestion": "核对原餐馆资料；若为同一地点请提供可核对的名称/ID依据，否则按当前meals的餐馆重写该时段介绍，不能只改变审核结论。",
+          "source": "program"
+        }
+      ],
+      "time_evidence": [
+        {
+          "day_index": 0,
+          "suggested_visit_minutes": 75,
+          "expected_route_count": 1,
+          "known_route_count": 1,
+          "known_route_duration_s": 600,
+          "known_total_duration_s": 5100,
+          "all_adjacent_routes_available": true,
+          "display_text": "第1天：建议游览75分钟＋已知相邻景点交通10分钟，已知合计85分钟；相邻景点路线已齐。此合计不是完整全天耗时，未计入用餐、休息及酒店/餐馆接驳；景点内部步行未单独核验。"
+        }
+      ],
+      "meal_consistency": [
+        {
+          "day_index": 0,
+          "meal_type": "lunch",
+          "expected_poi_id": "meal_a",
+          "expected_name": "餐馆甲",
+          "mentioned_name": "餐馆乙",
+          "source_excerpt": "之后在甲景点附近的餐馆乙午餐",
+          "status": "conflict",
+          "explanation": "午餐：文字为“餐馆乙”，列表为“餐馆甲”，名称不一致，需要统一或提供同一地点依据。"
+        }
+      ],
+      "semantic_status": "unavailable"
+    },
+    "message": "语义审核未完成，保留程序发现的问题。"
+  },
+  "route_diagnostics": [],
+  "request_id": null,
+  "candidate_evidence": null,
+  "stage_timings": [],
+  "dining_diagnostics": [],
+  "route_resolution": null
+}

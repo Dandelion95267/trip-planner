@@ -8,6 +8,7 @@ import BudgetSummary from "./BudgetSummary.vue";
 import { tripPlainText } from "../utils/trip_document";
 
 const props = defineProps<{ plan: TripPlan }>();
+const emit = defineEmits<{ "edit-request": [section?: "route" | "dining"] }>();
 const activeIndex = ref(0);
 const message = ref("");
 const pdfBusy = ref(false);
@@ -34,6 +35,18 @@ const mealNames = {
   lunch: "午餐",
   dinner: "晚餐",
   snack: "加餐",
+};
+const preferenceEvidenceNames = {
+  supported: "有地图类别依据",
+  hint: "仅有名称线索",
+  unknown: "待确认",
+  conflict: "类别冲突",
+};
+const diningStatusNames = {
+  candidates_available: "已有餐馆候选，实际条件待确认",
+  partial: "部分用餐时段待补充",
+  needs_choice: "餐饮安排待选择",
+  not_applicable: "尚无参考景点",
 };
 const modeNames = { walking: "步行", driving: "驾车", transit: "公共交通" };
 const reviewStatusNames = {
@@ -113,7 +126,11 @@ async function downloadPdf() {
   <section class="results" aria-label="旅行规划结果">
     <header class="result-heading">
       <div>
-        <span class="eyebrow">旅程已成形</span>
+        <span class="eyebrow">{{
+          plan.route_resolution?.status === "needs_choice"
+            ? "旅程还需要你的选择"
+            : "旅程已成形"
+        }}</span>
         <h2>
           {{ plan.city }}的 {{ plan.days.length }} 日旅程<span class="small-dot"
             >.</span
@@ -160,10 +177,88 @@ async function downloadPdf() {
     </header>
     <p v-if="message" class="inline-message" role="status">{{ message }}</p>
     <p v-if="pdfBusy" class="inline-message" role="status">{{ pdfProgress }}</p>
+    <section
+      v-if="plan.route_resolution?.status === 'needs_choice'"
+      class="notice-box route-resolution"
+      aria-label="路线待选择"
+    >
+      <h3>部分路线待确认，请选择下一步</h3>
+      <p>{{ plan.route_resolution.summary }}</p>
+      <p>
+        <strong>原要求：</strong
+        >{{ plan.route_resolution.requested_transportation
+        }}<template v-if="plan.route_resolution.max_leg_walking_m !== null"
+          >；每段景点间步行不超过
+          {{ plan.route_resolution.max_leg_walking_m }} 米</template
+        >。
+      </p>
+      <ul>
+        <li
+          v-for="(item, index) in plan.route_resolution.unresolved"
+          :key="index"
+        >
+          <strong
+            >第 {{ item.day_index + 1 }} 天：{{ item.origin_name }} →
+            {{ item.destination_name }}</strong
+          >
+          <p>{{ item.explanation }}</p>
+        </li>
+      </ul>
+      <h4>可选做法 · 均待重新查询</h4>
+      <div class="route-options">
+        <article
+          v-for="option in plan.route_resolution.alternatives"
+          :key="option.kind"
+          class="route-option"
+        >
+          <strong>{{ option.title }}</strong>
+          <p>{{ option.description }}</p>
+          <ul v-if="option.condition_changes.length">
+            <li v-for="change in option.condition_changes" :key="change">
+              {{ change }}
+            </li>
+          </ul>
+          <small>待你确认 · 尚未应用 · 可用性待核验</small>
+        </article>
+      </div>
+      <p>
+        原要求和已验证路线保持不变。若改变交通方式或数字上限，请同步修改“其他需求”中的文字要求，再点击生成行程。
+      </p>
+      <ul>
+        <li
+          v-for="limitation in plan.route_resolution.limitations"
+          :key="limitation"
+        >
+          {{ limitation }}
+        </li>
+      </ul>
+      <button type="button" class="text-button" @click="emit('edit-request')">
+        返回需求设置
+      </button>
+    </section>
     <section v-if="plan.review" class="notice-box" aria-label="行程审核结果">
       <strong>{{ reviewStatusNames[plan.review.status] }}</strong>
       <p>{{ plan.review.message }}</p>
       <p v-if="plan.review.result">{{ plan.review.result.summary }}</p>
+      <ul v-if="plan.review.result?.time_evidence?.length" aria-label="已知时间汇总">
+        <li v-for="item in plan.review.result.time_evidence" :key="item.day_index">
+          {{ item.display_text }}
+        </li>
+      </ul>
+      <p v-if="plan.review.result?.semantic_status === 'unavailable'">
+        语义审核未完成，当前保留的是程序核对结果。
+      </p>
+      <p v-else-if="plan.review.result?.semantic_status === 'not_run'">
+        语义审核尚未执行，其余安排仍需确认。
+      </p>
+      <details v-if="plan.review.result?.meal_consistency?.length">
+        <summary>餐饮名称核对</summary>
+        <ul>
+          <li v-for="(item, index) in plan.review.result.meal_consistency" :key="index">
+            第 {{ item.day_index + 1 }} 天 · {{ item.explanation }}
+          </li>
+        </ul>
+      </details>
       <small
         >审核尝试 {{ plan.review.review_count }} 次 · 已调整
         {{ plan.review.revisions }} 轮</small
@@ -178,7 +273,13 @@ async function downloadPdf() {
             }}：{{ issue.problem }}</strong
           >
           <p>依据：{{ issue.evidence }}</p>
+          <p v-if="issue.source">来源：{{ issue.source === "program" ? "程序核对" : "模型意见" }}</p>
           <p>建议：{{ issue.suggestion }}</p>
+          <div v-if="issue.alternative" class="notice-box">
+            <strong>其他调整方向 · 待你确认，尚未采用</strong>
+            <p>{{ issue.alternative.proposal }}</p>
+            <p>这可能改变原要求。只有你同意并修改需求后才重新规划，本次不会自动执行。</p>
+          </div>
         </li>
       </ul>
     </section>
@@ -347,11 +448,92 @@ async function downloadPdf() {
             <div>
               <strong>{{ meal.name }}</strong>
               <p>{{ meal.address || "地址暂未提供" }}</p>
+              <ul
+                v-if="meal.preference_evidence?.length"
+                class="meal-preference-evidence"
+                aria-label="餐饮偏好依据"
+              >
+                <li
+                  v-for="(evidence, index) in meal.preference_evidence"
+                  :key="index"
+                >
+                  <strong
+                    >{{ evidence.preference }}：{{
+                      preferenceEvidenceNames[evidence.status]
+                    }}</strong
+                  >
+                  <p v-if="evidence.value">
+                    依据（{{
+                      evidence.source === "poi_type" ? "地图类别" : "名称线索"
+                    }}）：{{ evidence.value }}
+                  </p>
+                  <p>{{ evidence.explanation }}</p>
+                </li>
+              </ul>
+              <p v-if="meal.straight_line_distance_m != null" class="muted">
+                距参考景点直线约
+                {{ meal.straight_line_distance_m }} 米（非步行距离，接驳未核验）
+              </p>
               <small>费用：{{ money(meal.estimated_cost) }}</small>
             </div>
           </div>
           <p v-if="!day.meals.length" class="muted">
-            暂无候选餐馆，可调整餐饮偏好后重试。
+            暂无候选餐馆，请查看本次查询说明或稍后重试。
+          </p>
+          <section
+            v-if="day.dining_resolution"
+            class="dining-resolution"
+            aria-label="餐饮候选状态"
+          >
+            <strong>{{
+              diningStatusNames[day.dining_resolution.status]
+            }}</strong>
+            <p>{{ day.dining_resolution.summary }}</p>
+            <p
+              v-for="note in day.dining_resolution.preference_notes || []"
+              :key="note"
+            >
+              {{ note }}
+            </p>
+            <p v-if="day.dining_resolution.requested_preference">
+              原餐饮偏好：{{
+                day.dining_resolution.requested_preference
+              }}，适配尚未核实。
+            </p>
+            <ul v-if="day.dining_resolution.unresolved.length">
+              <li
+                v-for="item in day.dining_resolution.unresolved"
+                :key="item.meal_type"
+              >
+                {{ mealNames[item.meal_type] }} · {{ item.anchor_name }}：{{
+                  item.explanation
+                }}
+              </li>
+            </ul>
+            <div
+              v-for="option in day.dining_resolution.alternatives"
+              :key="option.kind"
+              class="dining-option"
+            >
+              <strong>{{ option.title }}</strong>
+              <p>{{ option.description }}</p>
+              <small>待你确认 · 尚未应用 · 可用性待核验</small>
+            </div>
+            <button
+              v-if="day.dining_resolution.alternatives.length"
+              type="button"
+              class="text-button"
+              @click="emit('edit-request', 'dining')"
+            >
+              返回餐饮需求
+            </button>
+          </section>
+          <p
+            v-for="warning in day.dining_warnings || []"
+            :key="warning"
+            class="muted"
+          >
+            {{ warning }}
           </p>
         </article>
         <article class="support-card">

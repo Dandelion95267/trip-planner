@@ -30,6 +30,11 @@ def make_inputs():
                  "visit_duration": 120, "description": "参观建议。"}
                 for key in ("a", "b", "c")
             ],
+            "routes": [{
+                "origin": {"id": a, "name": f"景点{a}"},
+                "destination": {"id": b, "name": f"景点{b}"},
+                "mode": "transit", "duration_s": 1800, "walking_distance_m": 500,
+            } for a, b in (("a", "b"), ("b", "c"))],
         }], overall_suggestions="出行前确认预约条件。",
     )
     failed = TripReviewResult(passed=False, summary="行程偏满。", issues=[{

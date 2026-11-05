@@ -1,0 +1,171 @@
+{
+  "city": "测试城市",
+  "start_date": "2026-11-05",
+  "end_date": "2026-11-05",
+  "days": [
+    {
+      "date": "2026-11-05",
+      "day_index": 0,
+      "description": "上午游览水岸展馆，午餐候选：晴川饭馆。午餐后自由休息，下午参观工艺馆。菜单、营业、房态和酒店/餐馆实际接驳均未核验，直线距离不等于步行距离。",
+      "transportation": "步行",
+      "accommodation": "经济型酒店",
+      "hotel": {
+        "poi_id": "mock_hotel",
+        "name": "松风旅舍",
+        "address": "模拟酒店地址",
+        "location": null,
+        "price_range": null,
+        "rating": null,
+        "distance": null,
+        "type": null,
+        "estimated_cost": null
+      },
+      "attractions": [
+        {
+          "poi_id": "mock_a",
+          "name": "水岸展馆",
+          "address": "模拟地址",
+          "location": null,
+          "visit_duration": 200,
+          "description": "室内展厅参观。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "mock_b",
+          "name": "工艺馆",
+          "address": "模拟地址",
+          "location": null,
+          "visit_duration": 200,
+          "description": "室内展厅参观。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "mock_meal",
+          "type": "lunch",
+          "name": "晴川饭馆",
+          "address": null,
+          "location": null,
+          "description": "到参考景点为模拟直线距离800米；实际接驳、菜单和营业均未核验。",
+          "estimated_cost": null,
+          "anchor_poi_id": "mock_a",
+          "straight_line_distance_m": 800,
+          "poi_category": null,
+          "preference_level": null,
+          "preference_evidence": [],
+          "preference_summary": null
+        }
+      ],
+      "dining_warnings": [],
+      "dining_resolution": null,
+      "routes": [
+        {
+          "origin": {
+            "id": "mock_a",
+            "name": "水岸展馆",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "destination": {
+            "id": "mock_b",
+            "name": "工艺馆",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "mode": "walking",
+          "distance_m": 500,
+          "duration_s": 1800,
+          "walking_distance_m": null,
+          "steps": [],
+          "selection_reason": null,
+          "warnings": []
+        }
+      ],
+      "route_warnings": [],
+      "order_optimization": null
+    }
+  ],
+  "weather_info": [],
+  "overall_suggestions": "以下为虚构地点、模拟路线和预报，只能根据给定资料审核；没有真实预订或商家确认。",
+  "budget": null,
+  "review": {
+    "status": "needs_revision",
+    "review_count": 1,
+    "revisions": 0,
+    "result": {
+      "passed": false,
+      "summary": "本次列出1项待修改意见，请核对逐项依据。",
+      "issues": [
+        {
+          "category": "pace",
+          "day_index": 0,
+          "problem": "当天景点游览与相邻景点交通的已知合计超过用户明确给出的6小时（360分钟）上限。",
+          "evidence": "用户要求“一天可用于景点游览和相邻景点交通的时间上限为6小时，即360分钟；这一上限不包含餐饮、休息和酒店/餐馆接驳”。daily_time_evidence显示第1天建议游览400分钟、已知相邻景点交通30分钟，display_text为“已知合计430分钟”，已超出360分钟上限。",
+          "suggestion": "保持每天恰好2个景点及原交通方式、步行限制。优先调整景点位置、顺序或合理游览时长，不得编造或过度压缩；仍无法满足时说明原因，等待用户选择，不直接改变数量。",
+          "source": "model",
+          "alternative": {
+            "proposal": "减少景点游览时长或减少一个景点，使景点游览与相邻景点交通的已知合计不超过360分钟；例如将两个景点的建议游览时长合计压缩到330分钟以内，保留30分钟已知步行交通。",
+            "requires_confirmation": true,
+            "applied": false
+          }
+        }
+      ],
+      "time_evidence": [
+        {
+          "day_index": 0,
+          "suggested_visit_minutes": 400,
+          "expected_route_count": 1,
+          "known_route_count": 1,
+          "known_route_duration_s": 1800,
+          "known_total_duration_s": 25800,
+          "all_adjacent_routes_available": true,
+          "display_text": "第1天：建议游览400分钟＋已知相邻景点交通30分钟，已知合计430分钟；相邻景点路线已齐。此合计不是完整全天耗时，未计入用餐、休息及酒店/餐馆接驳；景点内部步行未单独核验。"
+        }
+      ],
+      "meal_consistency": [
+        {
+          "day_index": 0,
+          "meal_type": "lunch",
+          "expected_poi_id": "mock_meal",
+          "expected_name": "晴川饭馆",
+          "mentioned_name": "晴川饭馆",
+          "source_excerpt": "午餐候选：晴川饭馆",
+          "status": "matched",
+          "explanation": "午餐：文字名称与列表名称或同次地点ID一致；不代表菜单、营业或接驳已确认。"
+        }
+      ],
+      "semantic_status": "completed"
+    },
+    "message": "本次修改未通过原每日数量校验（原要求：每天恰好2个景点；第1天实际1个景点。），修改未采用，保留上一版行程及其审核意见。若愿意改变数量，请先修改需求后重新规划。"
+  },
+  "route_diagnostics": [],
+  "request_id": null,
+  "candidate_evidence": null,
+  "stage_timings": [],
+  "dining_diagnostics": [],
+  "route_resolution": {
+    "status": "verified",
+    "scope": "adjacent_attractions",
+    "requested_transportation": "步行",
+    "requested_mode": "walking",
+    "max_leg_walking_m": null,
+    "preserve_first_attraction": false,
+    "required_segments": 1,
+    "verified_segments": 1,
+    "summary": "按原交通方式和可选步行上限，已核验1/1段相邻景点路线。",
+    "limitations": [
+      "只核验相邻景点路线，不含景点内部、酒店或餐馆接驳，实际出行前仍需确认。"
+    ],
+    "unresolved": [],
+    "alternatives": []
+  }
+}

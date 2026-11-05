@@ -11,6 +11,9 @@ from pydantic import ValidationError
 
 from app.models.schemas import POIInfo, TripPlan
 from evaluation.validate_cases import EvaluationCase
+from evaluation.route_resolution_checks import evaluate_route_resolution
+from evaluation.dining_checks import evaluate_dining_resolution
+from evaluation.dining_preference_checks import evaluate_dining_preferences
 
 
 def check(status: str, *details: str) -> dict:
@@ -28,6 +31,8 @@ def verdict(failures: list[str], unknowns: list[str] | None = None) -> dict:
 def check_sources(plan: TripPlan, evidence: dict | None) -> dict:
     if not isinstance(evidence, dict):
         return check("unknown", "Same-run candidate evidence was not captured.")
+    if "version" in evidence:
+        return check_captured_sources(plan, evidence)
     failures, unknowns = [], []
     groups = {
         "candidates": [item for day in plan.days for item in day.attractions],
@@ -62,6 +67,58 @@ def check_sources(plan: TripPlan, evidence: dict | None) -> dict:
             elif original.location is None and place.location is not None:
                 # Route/detail lookup may have legitimately supplemented these coordinates.
                 unknowns.append(f"POI {place.poi_id!r} supplemented coordinates need detail evidence.")
+    return verdict(failures, unknowns)
+
+
+def check_captured_sources(plan: TripPlan, evidence: dict) -> dict:
+    """新增采集链路的核验；旧记录仍走原规则，不事后补造来源。"""
+    from datetime import datetime
+    from app.models.schemas import CandidateEvidence
+    try:
+        captured = CandidateEvidence.model_validate(evidence)
+        for entry in captured.searches + captured.details:
+            stamp = datetime.fromisoformat(entry.collected_at_utc)
+            if stamp.utcoffset() is None:
+                raise ValueError("missing timezone")
+    except (ValidationError, ValueError, TypeError):
+        return check("unknown", "Invalid captured source evidence or timestamp.")
+    if not plan.request_id or captured.request_id != plan.request_id:
+        return check("failed", "Source evidence request ID does not match the delivered plan.")
+    if not captured.searches:
+        return check("unknown", "No same-run search snapshots were captured.")
+    failures, unknowns = [], []
+    observations = [poi for search in captured.searches for poi in search.pois]
+    details = [entry.poi for entry in captured.details]
+    groups = {
+        "candidates": [x for day in plan.days for x in day.attractions],
+        "hotel_candidates": [day.hotel for day in plan.days if day.hotel is not None],
+        "restaurant_candidates": [x for day in plan.days for x in day.meals],
+    }
+    for group, places in groups.items():
+        candidates = getattr(captured, group)
+        if len({p.id for p in candidates}) != len(candidates):
+            unknowns.append(f"Ambiguous duplicate IDs in {group} evidence.")
+            continue
+        by_id = {p.id: p for p in candidates}
+        for place in places:
+            original = by_id.get(place.poi_id)
+            if original is None:
+                failures.append(f"POI {place.poi_id!r} is absent from {group}.")
+                continue
+            matching = [p for p in observations if p.id == original.id
+                        and p.name == original.name and p.address == original.address]
+            if not matching:
+                failures.append(f"POI {place.poi_id!r} is not backed by a captured search result.")
+            if place.name != original.name or (place.address or "") != original.address:
+                failures.append(f"POI {place.poi_id!r} name/address disagrees with evidence.")
+            if place.location is not None:
+                coordinates = [p.location for p in observations + details if p.id == place.poi_id and p.location is not None]
+                if not coordinates:
+                    unknowns.append(f"POI {place.poi_id!r} supplemented coordinates need detail evidence.")
+                elif place.location not in coordinates:
+                    failures.append(f"POI {place.poi_id!r} coordinates disagree with captured evidence.")
+            elif original.location is not None:
+                failures.append(f"POI {place.poi_id!r} lost its known coordinates.")
     return verdict(failures, unknowns)
 
 
@@ -186,6 +243,9 @@ def evaluate_case(case: EvaluationCase, result, candidate_evidence: dict | None 
         "delivered": True, "hard_status": status, "available_checks_pass": "failed" not in states,
         "checks": checks, "routes": {"expected": expected_legs, "matched": matched_legs},
         "manual_review": "pending", "reported_review_status": plan.review.status if plan.review else None,
+        "route_resolution_handling": evaluate_route_resolution(case.request, plan),
+        "dining_resolution_handling": evaluate_dining_resolution(case.request, plan),
+        "dining_preference_handling": evaluate_dining_preferences(case.request, plan),
     }
 
 
@@ -207,6 +267,9 @@ def summarize(records: list[dict]) -> dict:
         "verified_hard_passes": verified, "verified_hard_pass_rate": verified / count if count else None,
         "available_checks_passes": available, "available_checks_pass_rate": available / count if count else None,
         "hard_status_counts": dict(Counter(record["evaluation"]["hard_status"] for record in records)),
+        "route_resolution_handling": dict(Counter(record["evaluation"].get("route_resolution_handling", {"status": "not_evaluated"})["status"] for record in records)),
+        "dining_resolution_handling": dict(Counter(record["evaluation"].get("dining_resolution_handling", {"status": "not_evaluated"})["status"] for record in records)),
+        "dining_preference_handling": dict(Counter(record["evaluation"].get("dining_preference_handling", {"status": "not_evaluated"})["status"] for record in records)),
         "checks": checks,
         "route_coverage_on_delivered_plans": {"expected": expected, "matched": matched, "rate": matched / expected if expected else None},
         "elapsed_s": {"count": len(timings), "mean": mean(timings) if timings else None, "median": median(timings) if timings else None, "max": max(timings) if timings else None},

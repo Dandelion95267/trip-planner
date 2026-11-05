@@ -1,0 +1,684 @@
+{
+  "city": "成都",
+  "start_date": "2026-11-01",
+  "end_date": "2026-11-02",
+  "days": [
+    {
+      "date": "2026-11-01",
+      "day_index": 0,
+      "description": "上午：测试景点1（建议120分钟）。\n午餐候选：测试川菜馆，地址：未提供。以测试景点1为参考筛选，估算直线距离约670米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：有地图类别依据；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。\n午餐后建议预留约1小时休息；餐饮和接驳耗时未核验，请按实际条件调整。\n下午按顺序游览：测试景点2（建议60分钟）。\n晚餐候选：测试川菜馆，地址：未提供。以测试景点2为参考筛选，估算直线距离约191米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：有地图类别依据；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。\n晚间建议休息，酒店与餐馆接驳未核验。开放时间和预约请出行前确认。\n景点间路线尚未核验完整；以下餐馆仅围绕当前暂定景点筛选。调整景点后需重新查询，餐馆接驳未核验，也不代表景点间交通要求已满足。",
+      "transportation": "公共交通",
+      "accommodation": "经济型酒店",
+      "hotel": {
+        "poi_id": "test-hotel",
+        "name": "测试酒店",
+        "address": "测试酒店地址",
+        "location": null,
+        "price_range": null,
+        "rating": null,
+        "distance": null,
+        "type": null,
+        "estimated_cost": null
+      },
+      "attractions": [
+        {
+          "poi_id": "test-palace",
+          "name": "测试景点1",
+          "address": "景山前街4号",
+          "location": {
+            "longitude": 104.06,
+            "latitude": 30.65
+          },
+          "visit_duration": 120,
+          "description": "测试用游览建议。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "test-park",
+          "name": "测试景点2",
+          "address": "景山西街44号",
+          "location": {
+            "longitude": 104.065,
+            "latitude": 30.65
+          },
+          "visit_duration": 60,
+          "description": "公园散步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": 0
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "local",
+          "type": "lunch",
+          "name": "测试川菜馆",
+          "address": "",
+          "location": {
+            "longitude": 104.067,
+            "latitude": 30.65
+          },
+          "description": "以测试景点1为参考筛选，估算直线距离约670米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：有地图类别依据；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-palace",
+          "straight_line_distance_m": 670,
+          "poi_category": "餐饮服务;四川菜(川菜)",
+          "preference_level": "category_supported",
+          "preference_evidence": [
+            {
+              "preference": "本地菜",
+              "kind": "cuisine",
+              "target_category": "川菜",
+              "strict": false,
+              "status": "supported",
+              "source": "poi_type",
+              "value": "餐饮服务;四川菜(川菜)",
+              "explanation": "地图类别支持该检索方向；不代表菜单、做法或营业条件已核实。"
+            },
+            {
+              "preference": "清淡",
+              "kind": "taste",
+              "target_category": null,
+              "strict": false,
+              "status": "unknown",
+              "source": "not_available",
+              "value": null,
+              "explanation": "地图类别或店名不能证明实际口味与做法，需联系商家确认。"
+            }
+          ],
+          "preference_summary": "本地菜：有地图类别依据；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。"
+        },
+        {
+          "poi_id": "local",
+          "type": "dinner",
+          "name": "测试川菜馆",
+          "address": "",
+          "location": {
+            "longitude": 104.067,
+            "latitude": 30.65
+          },
+          "description": "以测试景点2为参考筛选，估算直线距离约191米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：有地图类别依据；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-park",
+          "straight_line_distance_m": 191,
+          "poi_category": "餐饮服务;四川菜(川菜)",
+          "preference_level": "category_supported",
+          "preference_evidence": [
+            {
+              "preference": "本地菜",
+              "kind": "cuisine",
+              "target_category": "川菜",
+              "strict": false,
+              "status": "supported",
+              "source": "poi_type",
+              "value": "餐饮服务;四川菜(川菜)",
+              "explanation": "地图类别支持该检索方向；不代表菜单、做法或营业条件已核实。"
+            },
+            {
+              "preference": "清淡",
+              "kind": "taste",
+              "target_category": null,
+              "strict": false,
+              "status": "unknown",
+              "source": "not_available",
+              "value": null,
+              "explanation": "地图类别或店名不能证明实际口味与做法，需联系商家确认。"
+            }
+          ],
+          "preference_summary": "本地菜：有地图类别依据；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。"
+        }
+      ],
+      "dining_warnings": [
+        "景点间路线尚未核验完整；以下餐馆仅围绕当前暂定景点筛选。调整景点后需重新查询，餐馆接驳未核验，也不代表景点间交通要求已满足。"
+      ],
+      "dining_resolution": {
+        "status": "candidates_available",
+        "requested_preference": "本地菜 清淡",
+        "preference_verification": "not_verified",
+        "based_on_provisional_itinerary": true,
+        "required_slots": 2,
+        "provided_slots": 2,
+        "summary": "当前提供2/2个用餐时段的餐馆候选；候选位置基于暂定景点。菜单、营业、偏好与实际接驳仍需确认。",
+        "preference_notes": [
+          "“本地菜”按成都的川菜类别方向检索；类别不代表具体菜单已核实。",
+          "菜系按同次地图类别或名称线索分别说明；清淡做法、菜单与饮食限制必须联系商家进一步核实。"
+        ],
+        "unresolved": [],
+        "alternatives": [
+          {
+            "kind": "contact_restaurant",
+            "title": "联系商家核实菜单与做法",
+            "description": "地图类别只能支持类别检索方向，店名只是线索。请先联系商家确认清淡做法或严格饮食要求，再决定是否使用候选；系统尚未替你联系或确认。",
+            "requires_confirmation": true,
+            "verification": "not_verified"
+          }
+        ]
+      },
+      "routes": [],
+      "route_warnings": [],
+      "order_optimization": null
+    },
+    {
+      "date": "2026-11-02",
+      "day_index": 1,
+      "description": "上午：测试景点3（建议120分钟）。\n午餐候选：测试川菜名称候选，地址：未提供。以测试景点3为参考筛选，估算直线距离约239米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：仅有名称线索；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。\n午餐后建议预留约1小时休息；餐饮和接驳耗时未核验，请按实际条件调整。\n下午按顺序游览：测试景点4（建议120分钟）。\n晚餐候选：测试川菜名称候选，地址：未提供。以测试景点4为参考筛选，估算直线距离约239米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：仅有名称线索；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。\n晚间建议休息，酒店与餐馆接驳未核验。开放时间和预约请出行前确认。\n景点间路线尚未核验完整；以下餐馆仅围绕当前暂定景点筛选。调整景点后需重新查询，餐馆接驳未核验，也不代表景点间交通要求已满足。\n午餐：完整关键词未取得充分候选或类别依据，已用“川菜”补充查询；原偏好未改变，清淡做法等偏好适配尚未核实。\n晚餐：完整关键词未取得充分候选或类别依据，已用“川菜”补充查询；原偏好未改变，清淡做法等偏好适配尚未核实。",
+      "transportation": "公共交通",
+      "accommodation": "经济型酒店",
+      "hotel": null,
+      "attractions": [
+        {
+          "poi_id": "test-temple",
+          "name": "测试景点3",
+          "address": "天坛东路",
+          "location": {
+            "longitude": 104.07000000000001,
+            "latitude": 30.65
+          },
+          "visit_duration": 120,
+          "description": "公园漫步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "test-street",
+          "name": "测试景点4",
+          "address": "天坛东路",
+          "location": {
+            "longitude": 104.075,
+            "latitude": 30.65
+          },
+          "visit_duration": 120,
+          "description": "公园漫步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "hint",
+          "type": "lunch",
+          "name": "测试川菜名称候选",
+          "address": "",
+          "location": {
+            "longitude": 104.0725,
+            "latitude": 30.65
+          },
+          "description": "以测试景点3为参考筛选，估算直线距离约239米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：仅有名称线索；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-temple",
+          "straight_line_distance_m": 239,
+          "poi_category": "中餐厅",
+          "preference_level": "name_hint",
+          "preference_evidence": [
+            {
+              "preference": "本地菜",
+              "kind": "cuisine",
+              "target_category": "川菜",
+              "strict": false,
+              "status": "hint",
+              "source": "poi_name",
+              "value": "测试川菜名称候选",
+              "explanation": "名称提供类别线索，但缺少地图类别确认，需进一步核实。"
+            },
+            {
+              "preference": "清淡",
+              "kind": "taste",
+              "target_category": null,
+              "strict": false,
+              "status": "unknown",
+              "source": "not_available",
+              "value": null,
+              "explanation": "地图类别或店名不能证明实际口味与做法，需联系商家确认。"
+            }
+          ],
+          "preference_summary": "本地菜：仅有名称线索；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。"
+        },
+        {
+          "poi_id": "hint",
+          "type": "dinner",
+          "name": "测试川菜名称候选",
+          "address": "",
+          "location": {
+            "longitude": 104.0725,
+            "latitude": 30.65
+          },
+          "description": "以测试景点4为参考筛选，估算直线距离约239米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。本地菜：仅有名称线索；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-street",
+          "straight_line_distance_m": 239,
+          "poi_category": "中餐厅",
+          "preference_level": "name_hint",
+          "preference_evidence": [
+            {
+              "preference": "本地菜",
+              "kind": "cuisine",
+              "target_category": "川菜",
+              "strict": false,
+              "status": "hint",
+              "source": "poi_name",
+              "value": "测试川菜名称候选",
+              "explanation": "名称提供类别线索，但缺少地图类别确认，需进一步核实。"
+            },
+            {
+              "preference": "清淡",
+              "kind": "taste",
+              "target_category": null,
+              "strict": false,
+              "status": "unknown",
+              "source": "not_available",
+              "value": null,
+              "explanation": "地图类别或店名不能证明实际口味与做法，需联系商家确认。"
+            }
+          ],
+          "preference_summary": "本地菜：仅有名称线索；清淡：尚未核实。请联系商家确认具体菜单、口味与做法。"
+        }
+      ],
+      "dining_warnings": [
+        "景点间路线尚未核验完整；以下餐馆仅围绕当前暂定景点筛选。调整景点后需重新查询，餐馆接驳未核验，也不代表景点间交通要求已满足。",
+        "午餐：完整关键词未取得充分候选或类别依据，已用“川菜”补充查询；原偏好未改变，清淡做法等偏好适配尚未核实。",
+        "晚餐：完整关键词未取得充分候选或类别依据，已用“川菜”补充查询；原偏好未改变，清淡做法等偏好适配尚未核实。"
+      ],
+      "dining_resolution": {
+        "status": "candidates_available",
+        "requested_preference": "本地菜 清淡",
+        "preference_verification": "not_verified",
+        "based_on_provisional_itinerary": true,
+        "required_slots": 2,
+        "provided_slots": 2,
+        "summary": "当前提供2/2个用餐时段的餐馆候选；候选位置基于暂定景点。菜单、营业、偏好与实际接驳仍需确认。",
+        "preference_notes": [
+          "“本地菜”按成都的川菜类别方向检索；类别不代表具体菜单已核实。",
+          "菜系按同次地图类别或名称线索分别说明；清淡做法、菜单与饮食限制必须联系商家进一步核实。"
+        ],
+        "unresolved": [],
+        "alternatives": [
+          {
+            "kind": "contact_restaurant",
+            "title": "联系商家核实菜单与做法",
+            "description": "地图类别只能支持类别检索方向，店名只是线索。请先联系商家确认清淡做法或严格饮食要求，再决定是否使用候选；系统尚未替你联系或确认。",
+            "requires_confirmation": true,
+            "verification": "not_verified"
+          }
+        ]
+      },
+      "routes": [],
+      "route_warnings": [],
+      "order_optimization": null
+    }
+  ],
+  "weather_info": [
+    {
+      "date": "2026-11-01",
+      "day_weather": "晴",
+      "night_weather": "晴",
+      "day_temp": 17,
+      "night_temp": 2,
+      "wind_direction": "北",
+      "wind_power": "1-3"
+    }
+  ],
+  "overall_suggestions": "行程按当前景点和地图餐馆候选整理。游览时长、休息安排和交通耗时为参考，请确认开放与预约条件。\n相邻景点路线已取得0/2段；缺失路段不能视为满足交通要求。路线不含景点内部、酒店和餐馆接驳。\n餐馆按参考景点周边检索并用坐标直线距离筛选；直线距离不是步行距离。菜单、营业时间、饮食要求是否满足和实际消费未确认。\n候选住宿的房价、房态及接驳未核验。费用仅按用户填写标准另行估算。\n暂无天气预报的日期：2026-11-02，请临近出行重新查询。\n部分餐饮检索或偏好适配需要确认，请查看每日提示；没有列出候选的时段尚未完成安排。",
+  "budget": null,
+  "review": {
+    "status": "needs_revision",
+    "review_count": 0,
+    "revisions": 0,
+    "result": {
+      "passed": false,
+      "summary": "部分路线尚未核验通过，已提供可选做法，等待你的选择。",
+      "issues": [
+        {
+          "category": "preference",
+          "day_index": 0,
+          "problem": "“测试景点1 → 测试景点2”尚未按原要求核验通过。",
+          "evidence": "本段尚未完成查询，不能判断是否存在合格路线。",
+          "suggestion": "查看路线待选择区域；可保持原条件重试，或自行决定是否调整景点、步行上限或交通方式后重新规划。"
+        },
+        {
+          "category": "preference",
+          "day_index": 1,
+          "problem": "“测试景点3 → 测试景点4”尚未按原要求核验通过。",
+          "evidence": "本段尚未完成查询，不能判断是否存在合格路线。",
+          "suggestion": "查看路线待选择区域；可保持原条件重试，或自行决定是否调整景点、步行上限或交通方式后重新规划。"
+        }
+      ]
+    },
+    "message": "本次有限路线搜索未完成全部核验，已保留原条件和已验证路线。请先选择下一步；其余行程安排尚未完成审核。"
+  },
+  "route_diagnostics": [],
+  "request_id": null,
+  "candidate_evidence": {
+    "version": 1,
+    "request_id": "56eed3d2f6b941e6a5e7e548a89a7c25",
+    "candidates": [],
+    "hotel_candidates": [],
+    "restaurant_candidates": [
+      {
+        "id": "local",
+        "name": "测试川菜馆",
+        "type": "餐饮服务;四川菜(川菜)",
+        "address": "",
+        "location": {
+          "longitude": 104.067,
+          "latitude": 30.65
+        }
+      },
+      {
+        "id": "bad",
+        "name": "测试越南菜馆",
+        "type": "越南菜",
+        "address": "",
+        "location": {
+          "longitude": 104.06,
+          "latitude": 30.65
+        }
+      },
+      {
+        "id": "hint",
+        "name": "测试川菜名称候选",
+        "type": "中餐厅",
+        "address": "",
+        "location": {
+          "longitude": 104.0725,
+          "latitude": 30.65
+        }
+      }
+    ],
+    "searches": [
+      {
+        "tool": "maps_around_search",
+        "parameters": {
+          "keywords": "本地菜 清淡 餐馆",
+          "location": "104.06,30.65",
+          "radius": "2000"
+        },
+        "collected_at_utc": "2026-11-05T09:45:10.310522+00:00",
+        "pois": [
+          {
+            "id": "local",
+            "name": "测试川菜馆",
+            "type": "餐饮服务;四川菜(川菜)",
+            "address": "",
+            "location": {
+              "longitude": 104.067,
+              "latitude": 30.65
+            }
+          },
+          {
+            "id": "bad",
+            "name": "测试越南菜馆",
+            "type": "越南菜",
+            "address": "",
+            "location": {
+              "longitude": 104.06,
+              "latitude": 30.65
+            }
+          }
+        ]
+      },
+      {
+        "tool": "maps_around_search",
+        "parameters": {
+          "keywords": "本地菜 清淡 餐馆",
+          "location": "104.065,30.65",
+          "radius": "2000"
+        },
+        "collected_at_utc": "2026-11-05T09:45:10.310522+00:00",
+        "pois": [
+          {
+            "id": "local",
+            "name": "测试川菜馆",
+            "type": "餐饮服务;四川菜(川菜)",
+            "address": "",
+            "location": {
+              "longitude": 104.067,
+              "latitude": 30.65
+            }
+          },
+          {
+            "id": "bad",
+            "name": "测试越南菜馆",
+            "type": "越南菜",
+            "address": "",
+            "location": {
+              "longitude": 104.065,
+              "latitude": 30.65
+            }
+          }
+        ]
+      },
+      {
+        "tool": "maps_around_search",
+        "parameters": {
+          "keywords": "本地菜 清淡 餐馆",
+          "location": "104.07000000000001,30.65",
+          "radius": "2000"
+        },
+        "collected_at_utc": "2026-11-05T09:45:10.312141+00:00",
+        "pois": [
+          {
+            "id": "hint",
+            "name": "测试川菜名称候选",
+            "type": "中餐厅",
+            "address": "",
+            "location": {
+              "longitude": 104.0725,
+              "latitude": 30.65
+            }
+          }
+        ]
+      },
+      {
+        "tool": "maps_around_search",
+        "parameters": {
+          "keywords": "川菜 餐馆",
+          "location": "104.07000000000001,30.65",
+          "radius": "2000"
+        },
+        "collected_at_utc": "2026-11-05T09:45:10.312141+00:00",
+        "pois": [
+          {
+            "id": "hint",
+            "name": "测试川菜名称候选",
+            "type": "中餐厅",
+            "address": "",
+            "location": {
+              "longitude": 104.0725,
+              "latitude": 30.65
+            }
+          }
+        ]
+      },
+      {
+        "tool": "maps_around_search",
+        "parameters": {
+          "keywords": "本地菜 清淡 餐馆",
+          "location": "104.075,30.65",
+          "radius": "2000"
+        },
+        "collected_at_utc": "2026-11-05T09:45:10.312141+00:00",
+        "pois": [
+          {
+            "id": "hint",
+            "name": "测试川菜名称候选",
+            "type": "中餐厅",
+            "address": "",
+            "location": {
+              "longitude": 104.0725,
+              "latitude": 30.65
+            }
+          }
+        ]
+      },
+      {
+        "tool": "maps_around_search",
+        "parameters": {
+          "keywords": "川菜 餐馆",
+          "location": "104.075,30.65",
+          "radius": "2000"
+        },
+        "collected_at_utc": "2026-11-05T09:45:10.312141+00:00",
+        "pois": [
+          {
+            "id": "hint",
+            "name": "测试川菜名称候选",
+            "type": "中餐厅",
+            "address": "",
+            "location": {
+              "longitude": 104.0725,
+              "latitude": 30.65
+            }
+          }
+        ]
+      }
+    ],
+    "details": [
+      {
+        "collected_at_utc": "2026-11-05T09:45:10.312141+00:00",
+        "poi": {
+          "id": "hint",
+          "name": "测试川菜名称候选",
+          "type": "中餐厅",
+          "address": "",
+          "location": {
+            "longitude": 104.0725,
+            "latitude": 30.65
+          }
+        }
+      }
+    ]
+  },
+  "stage_timings": [],
+  "dining_diagnostics": [
+    {
+      "generation": 1,
+      "day_index": 0,
+      "meal_type": "lunch",
+      "anchor_poi_id": "test-palace",
+      "selected_poi_id": "local",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": false,
+      "straight_line_distance_m": 670,
+      "query_terms": ["本地菜 清淡"],
+      "preference_rejections": 1
+    },
+    {
+      "generation": 1,
+      "day_index": 0,
+      "meal_type": "dinner",
+      "anchor_poi_id": "test-park",
+      "selected_poi_id": "local",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": false,
+      "straight_line_distance_m": 191,
+      "query_terms": ["本地菜 清淡"],
+      "preference_rejections": 1
+    },
+    {
+      "generation": 1,
+      "day_index": 1,
+      "meal_type": "lunch",
+      "anchor_poi_id": "test-temple",
+      "selected_poi_id": "hint",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": true,
+      "straight_line_distance_m": 239,
+      "query_terms": ["本地菜 清淡", "川菜"],
+      "preference_rejections": 0
+    },
+    {
+      "generation": 1,
+      "day_index": 1,
+      "meal_type": "dinner",
+      "anchor_poi_id": "test-street",
+      "selected_poi_id": "hint",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": true,
+      "straight_line_distance_m": 239,
+      "query_terms": ["本地菜 清淡", "川菜"],
+      "preference_rejections": 0
+    }
+  ],
+  "route_resolution": {
+    "status": "needs_choice",
+    "scope": "adjacent_attractions",
+    "requested_transportation": "自动",
+    "requested_mode": "auto",
+    "max_leg_walking_m": null,
+    "preserve_first_attraction": false,
+    "required_segments": 2,
+    "verified_segments": 0,
+    "summary": "按原条件已核验0/2段相邻景点路线；其余路段在本次候选与查询预算内未找到合格方案或未完成核验。请保留已验证部分，并选择下一步。",
+    "limitations": [
+      "只核验相邻景点路线，不含景点内部、酒店或餐馆接驳。",
+      "查询受候选范围与时间预算限制，暂未找到不等于已证明不存在可行方案。",
+      "替代选择尚未重新查询或应用；需要你确认条件后重新规划。"
+    ],
+    "unresolved": [
+      {
+        "day_index": 0,
+        "origin_poi_id": "test-palace",
+        "destination_poi_id": "test-park",
+        "origin_name": "测试景点1",
+        "destination_name": "测试景点2",
+        "reason": "not_queried",
+        "explanation": "本段尚未完成查询，不能判断是否存在合格路线。",
+        "observed_walking_m": null
+      },
+      {
+        "day_index": 1,
+        "origin_poi_id": "test-temple",
+        "destination_poi_id": "test-street",
+        "origin_name": "测试景点3",
+        "destination_name": "测试景点4",
+        "reason": "not_queried",
+        "explanation": "本段尚未完成查询，不能判断是否存在合格路线。",
+        "observed_walking_m": null
+      }
+    ],
+    "alternatives": [
+      {
+        "kind": "retry",
+        "title": "保留原条件，重新查询",
+        "description": "保持交通方式、步行上限和景点数量要求，稍后重新查询。地图返回可能变化，也可能仍未找到完整方案。",
+        "condition_changes": [],
+        "suggested_max_leg_walking_m": null,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      },
+      {
+        "kind": "change_attractions",
+        "title": "保留交通限制，调整景点或顺序",
+        "description": "保持原交通方式、步行上限和每日景点数量要求，调整未核验路段关联的景点或顺序后重新规划。已有预约请在其他需求中注明。",
+        "condition_changes": ["需要用户选择调整景点或顺序；已有首站约束仍保留"],
+        "suggested_max_leg_walking_m": null,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      },
+      {
+        "kind": "change_transport",
+        "title": "自行决定是否改用驾车或打车接驳",
+        "description": "仅在愿意改变原交通要求时考虑；替代路线、费用、停车及上下车步行均未查询。驾车模式无法核验原有的完整步行接驳上限。",
+        "condition_changes": [
+          "需要你同意改变原交通要求",
+          "改用驾车选项时需自行清空步行上限；这不代表符合原步行要求"
+        ],
+        "suggested_max_leg_walking_m": null,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      }
+    ]
+  }
+}

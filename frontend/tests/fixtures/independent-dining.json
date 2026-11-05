@@ -1,0 +1,395 @@
+{
+  "city": "北京",
+  "start_date": "2026-11-01",
+  "end_date": "2026-11-02",
+  "days": [
+    {
+      "date": "2026-11-01",
+      "day_index": 0,
+      "description": "上午：故宫博物院（建议120分钟）。\n午餐候选：测试周边餐馆，地址：测试地址。以故宫博物院为参考筛选，估算直线距离约0米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。\n午餐后建议预留约1小时休息；餐饮和接驳耗时未核验，请按实际条件调整。\n下午按顺序游览：景山公园（建议60分钟）。\n晚间建议休息，酒店与餐馆接驳未核验。开放时间和预约请出行前确认。\n景点间路线尚未核验完整；以下餐馆仅围绕当前暂定景点筛选。调整景点后需重新查询，餐馆接驳未核验，也不代表景点间交通要求已满足。\n晚餐：本次周边餐馆查询等待超时，本时段尚未核验完成；不表示该区域没有餐馆。",
+      "transportation": "公共交通",
+      "accommodation": "经济型酒店",
+      "hotel": {
+        "poi_id": "test-hotel",
+        "name": "测试酒店",
+        "address": "测试酒店地址",
+        "location": null,
+        "price_range": null,
+        "rating": null,
+        "distance": null,
+        "type": null,
+        "estimated_cost": null
+      },
+      "attractions": [
+        {
+          "poi_id": "test-palace",
+          "name": "故宫博物院",
+          "address": "景山前街4号",
+          "location": {
+            "longitude": 116.4,
+            "latitude": 39.9
+          },
+          "visit_duration": 120,
+          "description": "测试用游览建议。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "test-park",
+          "name": "景山公园",
+          "address": "景山西街44号",
+          "location": {
+            "longitude": 116.405,
+            "latitude": 39.9
+          },
+          "visit_duration": 60,
+          "description": "公园散步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": 0
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "meal-116.4",
+          "type": "lunch",
+          "name": "测试周边餐馆",
+          "address": "测试地址",
+          "location": {
+            "longitude": 116.4,
+            "latitude": 39.9
+          },
+          "description": "以故宫博物院为参考筛选，估算直线距离约0米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。这是当前暂定景点周边候选，景点变化后需重新查询。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-palace",
+          "straight_line_distance_m": 0
+        }
+      ],
+      "dining_warnings": [
+        "景点间路线尚未核验完整；以下餐馆仅围绕当前暂定景点筛选。调整景点后需重新查询，餐馆接驳未核验，也不代表景点间交通要求已满足。",
+        "晚餐：本次周边餐馆查询等待超时，本时段尚未核验完成；不表示该区域没有餐馆。"
+      ],
+      "dining_resolution": {
+        "status": "partial",
+        "requested_preference": "清淡",
+        "preference_verification": "not_verified",
+        "based_on_provisional_itinerary": true,
+        "required_slots": 2,
+        "provided_slots": 1,
+        "summary": "当前提供1/2个用餐时段的餐馆候选；候选位置基于暂定景点。菜单、营业、偏好与实际接驳仍需确认。",
+        "unresolved": [
+          {
+            "meal_type": "dinner",
+            "anchor_poi_id": "test-park",
+            "anchor_name": "景山公园",
+            "reason": "timeout",
+            "explanation": "本次周边餐馆查询等待超时，本时段尚未核验完成；不表示该区域没有餐馆。"
+          }
+        ],
+        "alternatives": [
+          {
+            "kind": "retry",
+            "title": "保留景点和餐饮要求，稍后重查",
+            "description": "保持当前参考景点与原餐饮偏好重新查询；服务或预算限制消失后可能取得候选，也可能仍需确认。",
+            "requires_confirmation": true,
+            "verification": "not_verified"
+          },
+          {
+            "kind": "manual_search",
+            "title": "围绕当前景点自行查找并联系餐馆",
+            "description": "可在地图中围绕列出的参考景点查找餐馆，并联系商家确认菜单、营业、口味和接驳。这些结果尚未由本系统核验。",
+            "requires_confirmation": true,
+            "verification": "not_verified"
+          },
+          {
+            "kind": "adjust_preferences",
+            "title": "自行决定是否调整餐饮偏好",
+            "description": "仅在愿意改变原偏好时，返回餐饮需求修改后重新规划；原偏好不会自动改写，新的匹配情况仍需核实。",
+            "requires_confirmation": true,
+            "verification": "not_verified"
+          }
+        ]
+      },
+      "routes": [],
+      "route_warnings": [],
+      "order_optimization": null
+    },
+    {
+      "date": "2026-11-02",
+      "day_index": 1,
+      "description": "上午：天坛公园（建议120分钟）。\n午餐候选：测试周边餐馆，地址：测试地址。以天坛公园为参考筛选，估算直线距离约0米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。\n午餐后建议预留约1小时休息；餐饮和接驳耗时未核验，请按实际条件调整。\n下午按顺序游览：测试步行街（建议120分钟）。\n晚餐候选：测试周边餐馆，地址：测试地址。以测试步行街为参考筛选，估算直线距离约0米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。\n晚间建议休息，酒店与餐馆接驳未核验。开放时间和预约请出行前确认。",
+      "transportation": "公共交通",
+      "accommodation": "经济型酒店",
+      "hotel": null,
+      "attractions": [
+        {
+          "poi_id": "test-temple",
+          "name": "天坛公园",
+          "address": "天坛东路",
+          "location": {
+            "longitude": 116.43,
+            "latitude": 39.9
+          },
+          "visit_duration": 120,
+          "description": "公园漫步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        },
+        {
+          "poi_id": "test-street",
+          "name": "测试步行街",
+          "address": "天坛东路",
+          "location": {
+            "longitude": 116.435,
+            "latitude": 39.9
+          },
+          "visit_duration": 120,
+          "description": "公园漫步。",
+          "category": "景点",
+          "rating": null,
+          "image_url": null,
+          "ticket_price": null
+        }
+      ],
+      "meals": [
+        {
+          "poi_id": "meal-116.43",
+          "type": "lunch",
+          "name": "测试周边餐馆",
+          "address": "测试地址",
+          "location": {
+            "longitude": 116.43,
+            "latitude": 39.9
+          },
+          "description": "以天坛公园为参考筛选，估算直线距离约0米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-temple",
+          "straight_line_distance_m": 0
+        },
+        {
+          "poi_id": "meal-116.435",
+          "type": "dinner",
+          "name": "测试周边餐馆",
+          "address": "测试地址",
+          "location": {
+            "longitude": 116.435,
+            "latitude": 39.9
+          },
+          "description": "以测试步行街为参考筛选，估算直线距离约0米；不是步行距离。菜单、营业时间、饮食适配与实际接驳均未核实。",
+          "estimated_cost": null,
+          "anchor_poi_id": "test-street",
+          "straight_line_distance_m": 0
+        }
+      ],
+      "dining_warnings": [],
+      "dining_resolution": {
+        "status": "candidates_available",
+        "requested_preference": "清淡",
+        "preference_verification": "not_verified",
+        "based_on_provisional_itinerary": false,
+        "required_slots": 2,
+        "provided_slots": 2,
+        "summary": "当前提供2/2个用餐时段的餐馆候选；候选位置基于当前景点。菜单、营业、偏好与实际接驳仍需确认。",
+        "unresolved": [],
+        "alternatives": []
+      },
+      "routes": [
+        {
+          "origin": {
+            "id": "test-temple",
+            "name": "天坛公园",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "destination": {
+            "id": "test-street",
+            "name": "测试步行街",
+            "type": "",
+            "address": "",
+            "location": null
+          },
+          "mode": "transit",
+          "distance_m": null,
+          "duration_s": 900,
+          "walking_distance_m": 708,
+          "steps": [],
+          "selection_reason": null,
+          "warnings": []
+        }
+      ],
+      "route_warnings": [],
+      "order_optimization": null
+    }
+  ],
+  "weather_info": [
+    {
+      "date": "2026-11-01",
+      "day_weather": "晴",
+      "night_weather": "晴",
+      "day_temp": 17,
+      "night_temp": 2,
+      "wind_direction": "北",
+      "wind_power": "1-3"
+    }
+  ],
+  "overall_suggestions": "行程按当前景点和地图餐馆候选整理。游览时长、休息安排和交通耗时为参考，请确认开放与预约条件。\n相邻景点路线已取得1/2段；缺失路段不能视为满足交通要求。路线不含景点内部、酒店和餐馆接驳。\n餐馆按参考景点周边检索并用坐标直线距离筛选；直线距离不是步行距离。菜单、营业时间、饮食要求是否满足和实际消费未确认。\n候选住宿的房价、房态及接驳未核验。费用仅按用户填写标准另行估算。\n相邻景点每段步行上限1000米；只有已返回的合格路线完成核验，其他出行范围不能据此声称达标。\n暂无天气预报的日期：2026-11-02，请临近出行重新查询。\n部分餐饮检索或偏好适配需要确认，请查看每日提示；没有列出候选的时段尚未完成安排。",
+  "budget": null,
+  "review": {
+    "status": "needs_revision",
+    "review_count": 0,
+    "revisions": 0,
+    "result": {
+      "passed": false,
+      "summary": "部分路线尚未核验通过，已提供可选做法，等待你的选择。",
+      "issues": [
+        {
+          "category": "preference",
+          "day_index": 0,
+          "problem": "“故宫博物院 → 景山公园”尚未按原要求核验通过。",
+          "evidence": "本次已返回方案中已知最小步行距离为1256米，超过原上限1000米；未取得符合原要求的方案。",
+          "suggestion": "查看路线待选择区域；可保持原条件重试，或自行决定是否调整景点、步行上限或交通方式后重新规划。"
+        }
+      ]
+    },
+    "message": "本次有限路线搜索未完成全部核验，已保留原条件和已验证路线。请先选择下一步；其余行程安排尚未完成审核。"
+  },
+  "route_diagnostics": [
+    {
+      "generation": 1,
+      "origin_poi_id": "test-palace",
+      "destination_poi_id": "test-park",
+      "mode": "transit",
+      "max_leg_walking_m": 1000,
+      "status": "over_limit",
+      "cache_hit": false,
+      "attempt": 1,
+      "walking_distance_m": null,
+      "minimum_returned_walking_m": 1256,
+      "message": "Synthetic observation"
+    }
+  ],
+  "request_id": null,
+  "candidate_evidence": null,
+  "stage_timings": [],
+  "dining_diagnostics": [
+    {
+      "generation": 1,
+      "day_index": 0,
+      "meal_type": "lunch",
+      "anchor_poi_id": "test-palace",
+      "selected_poi_id": "meal-116.4",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": false,
+      "straight_line_distance_m": 0
+    },
+    {
+      "generation": 1,
+      "day_index": 0,
+      "meal_type": "dinner",
+      "anchor_poi_id": "test-park",
+      "selected_poi_id": null,
+      "status": "timeout",
+      "cache_hit": false,
+      "search_relaxed": false,
+      "straight_line_distance_m": null
+    },
+    {
+      "generation": 1,
+      "day_index": 1,
+      "meal_type": "lunch",
+      "anchor_poi_id": "test-temple",
+      "selected_poi_id": "meal-116.43",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": false,
+      "straight_line_distance_m": 0
+    },
+    {
+      "generation": 1,
+      "day_index": 1,
+      "meal_type": "dinner",
+      "anchor_poi_id": "test-street",
+      "selected_poi_id": "meal-116.435",
+      "status": "selected",
+      "cache_hit": false,
+      "search_relaxed": false,
+      "straight_line_distance_m": 0
+    }
+  ],
+  "route_resolution": {
+    "status": "needs_choice",
+    "scope": "adjacent_attractions",
+    "requested_transportation": "公共交通",
+    "requested_mode": "transit",
+    "max_leg_walking_m": 1000,
+    "preserve_first_attraction": false,
+    "required_segments": 2,
+    "verified_segments": 1,
+    "summary": "按原条件已核验1/2段相邻景点路线；其余路段在本次候选与查询预算内未找到合格方案或未完成核验。请保留已验证部分，并选择下一步。",
+    "limitations": [
+      "只核验相邻景点路线，不含景点内部、酒店或餐馆接驳。",
+      "查询受候选范围与时间预算限制，暂未找到不等于已证明不存在可行方案。",
+      "替代选择尚未重新查询或应用；需要你确认条件后重新规划。"
+    ],
+    "unresolved": [
+      {
+        "day_index": 0,
+        "origin_poi_id": "test-palace",
+        "destination_poi_id": "test-park",
+        "origin_name": "故宫博物院",
+        "destination_name": "景山公园",
+        "reason": "over_limit",
+        "explanation": "本次已返回方案中已知最小步行距离为1256米，超过原上限1000米；未取得符合原要求的方案。",
+        "observed_walking_m": 1256
+      }
+    ],
+    "alternatives": [
+      {
+        "kind": "retry",
+        "title": "保留原条件，重新查询",
+        "description": "保持交通方式、步行上限和景点数量要求，稍后重新查询。地图返回可能变化，也可能仍未找到完整方案。",
+        "condition_changes": [],
+        "suggested_max_leg_walking_m": null,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      },
+      {
+        "kind": "change_attractions",
+        "title": "保留交通限制，调整景点或顺序",
+        "description": "保持原交通方式、步行上限和每日景点数量要求，调整未核验路段关联的景点或顺序后重新规划。已有预约请在其他需求中注明。",
+        "condition_changes": ["需要用户选择调整景点或顺序；已有首站约束仍保留"],
+        "suggested_max_leg_walking_m": null,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      },
+      {
+        "kind": "relax_walking_limit",
+        "title": "自行决定是否提高步行上限",
+        "description": "未核验路段的已返回方案中出现了1256米的步行距离。可考虑将上限从1000米调至1256米后重新查询；这不保证整趟行程可行。",
+        "condition_changes": ["需要你同意放宽原1000米上限"],
+        "suggested_max_leg_walking_m": 1256,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      },
+      {
+        "kind": "change_transport",
+        "title": "自行决定是否改用驾车或打车接驳",
+        "description": "仅在愿意改变原交通要求时考虑；替代路线、费用、停车及上下车步行均未查询。驾车模式无法核验原有的完整步行接驳上限。",
+        "condition_changes": [
+          "需要你同意改变原交通要求",
+          "改用驾车选项时需自行清空步行上限；这不代表符合原步行要求"
+        ],
+        "suggested_max_leg_walking_m": null,
+        "requires_confirmation": true,
+        "verification": "not_verified"
+      }
+    ]
+  }
+}
